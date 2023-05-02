@@ -20,8 +20,9 @@ camera.position.x = 1;
 
 // Set up the renderer
 var renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth, window.innerHeight);
-document.body.appendChild(renderer.domElement);
+renderer.setSize(window.innerWidth * 0.70, window.innerHeight * .70);
+const rightPanel = document.querySelector('#right-panel');
+rightPanel.appendChild(renderer.domElement);
 
 // Set up the controls
 var controls = new OrbitControls(camera, renderer.domElement);
