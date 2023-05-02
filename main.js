@@ -56,27 +56,6 @@ for(var i = 0; i<data.length; i++)
     }
 }
 
-// for (var i = 0; i < 6; i++) {
-//   spheres[i] = [];
-//   for (var j = 0; j < 6; j++) {
-//     spheres[i][j] = [];
-//     for (var k = 0; k < 6; k++) {
-       
-//       var geometry = new THREE.SphereGeometry(radius, 32, 32);
-      
-//       if(i+j+k<6){
-//         spheres[i][j][k] = new THREE.Mesh(geometry, material);
-//         spheres[i][j][k].position.set(
-//             i * distancei + (j+k) * 2,
-//             j * distancej ,
-//             k * distancek + (j*1.5),
-//         );
-//         scene.add(spheres[i][j][k]);
-//         }
-//     }
-//   }
-// }
-
 // Add ambient light to the scene
 var ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
 scene.add(ambientLight);
