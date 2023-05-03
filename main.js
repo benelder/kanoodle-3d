@@ -1,12 +1,7 @@
 import * as THREE from 'three';
 import {OrbitControls}  from 'OrbitControls'
+import {Board} from './kanoodle.js'
 
-fetch('https://localhost:44377/game/020')
-  .then(response => response.json())
-  .then(data => {
-    console.log(data); // Do something with the data
-
-    
 // Set up the scene
 var scene = new THREE.Scene();
 
@@ -33,28 +28,15 @@ controls.enableRotate = true;
 // Set up the spheres
 var radius = 2;
 var distancei = 4;
-var distancej = 3.2;
-var distancek = 4;
+var distancej = 3.3;
+var distancek = 3.3;
 var spheres = [];
 
-// Set up the material with gray color
+let board = new Board();
 
-for(var i = 0; i<data.length; i++)
-{
-    var node = data[i];
-    if(node.value != "-"){
-        var geometry = new THREE.SphereGeometry(radius, 32, 32);
-        var material = getMaterial(node.value);
-        var sphere = new THREE.Mesh(geometry, material);
-        sphere.position.set(
-                
-                node.y * distancej  + (node.z*1.5),
-                node.z * distancek,
-                node.x * distancei + (node.y+node.z) * 2
-        );
-        scene.add(sphere);
-    }
-}
+// Set up the material with gray color
+drawBoard();
+
 
 // Add ambient light to the scene
 var ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -98,16 +80,73 @@ function getMaterial(val){
 
     return new THREE.MeshLambertMaterial({ color: 0xDDDDDD });
 }
+
+function drawBoard(){
+    clearBoard();
+    for(var i = 0; i<board.boardMap.length; i++)
+    {
+        var node = board.boardMap[i];
+        if(node.value != ' ' && node.value != '-'){
+            var geometry = new THREE.SphereGeometry(radius, 32, 32);
+            var material = getMaterial(node.value);
+            var sphere = new THREE.Mesh(geometry, material);
+            sphere.position.set(
+                    node.y * distancej  + (node.z),
+                    node.z * distancek,
+                    node.x * distancei + (node.y+node.z) * 2
+            );
+            scene.add(sphere);
+        }
+    }
+}
+
+function clearBoard(){
+    for( var i = scene.children.length - 1; i >= 0; i--) { 
+        let obj = scene.children[i];
+        if(scene.children[i].type === 'Mesh'){
+            scene.remove(obj); 
+        }
+   }
+}
+
 // Render the scene
 function render() {
     requestAnimationFrame(render);
     renderer.render(scene, camera);
     controls.update(); // Update the controls
-  }
-  render();
+}
 
-  })
-  .catch(error => {
-    console.error(error);
-  });
+var prevBtn = document.getElementById('prevBtn');
+var nextBtn = document.getElementById('nextBtn');
+nextBtn.addEventListener("click", placeNextPosition);
+prevBtn.addEventListener("click", placePrevPosition);
 
+
+let curBluePosition = -1;
+
+function placeNextPosition(){
+    let usedPiece = board.piecesUsed['C'];
+    if(usedPiece !== undefined){
+        board.removePiece(usedPiece);
+    }
+    curBluePosition++;
+    if(curBluePosition > board.pieceRegistry.darkBluePositions.length){
+        curBluePosition = 0;
+    }
+    board.placePiece(board.pieceRegistry.darkBluePositions[curBluePosition]);
+    drawBoard();
+}
+
+function placePrevPosition(){
+    let usedPiece = board.piecesUsed['C'];
+    if(usedPiece !== undefined){
+        board.removePiece(usedPiece);
+    }
+    curBluePosition--;
+    if(curBluePosition < 0){
+        curBluePosition = board.pieceRegistry.darkBluePositions.length;
+    }
+    board.placePiece(board.pieceRegistry.darkBluePositions[curBluePosition]);
+    drawBoard();
+}
+render();
