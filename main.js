@@ -98,6 +98,20 @@ function drawBoard(){
             scene.add(sphere);
         }
     }
+    updateControlPanel();
+}
+
+function updateControlPanel(){
+    var btnAddC = document.getElementById('btnAddC');
+    var btnRemoveC = document.getElementById('btnRemoveC');
+    var btnNextC = document.getElementById('btnNextC');
+    var btnPrevC = document.getElementById('btnPrevC');
+
+    btnAddC.disabled = board.piecesUsed.has('C');
+    btnRemoveC.disabled = !board.piecesUsed.has('C');
+    btnNextC.disabled = !board.piecesUsed.has('C');
+    btnPrevC.disabled = !board.piecesUsed.has('C');
+
 }
 
 function clearBoard(){
@@ -116,13 +130,27 @@ function render() {
     controls.update(); // Update the controls
 }
 
-var prevBtn = document.getElementById('prevBtn');
-var nextBtn = document.getElementById('nextBtn');
-nextBtn.addEventListener("click", placeNextPosition);
-prevBtn.addEventListener("click", placePrevPosition);
+var btnPrevC = document.getElementById('btnPrevC');
+var btnNextC = document.getElementById('btnNextC');
+var btnAddC = document.getElementById('btnAddC');
+var btnRemoveC = document.getElementById('btnRemoveC');
+btnNextC.addEventListener("click", placeNextPosition);
+btnAddC.addEventListener("click", placeNextPosition);
+btnPrevC.addEventListener("click", placePrevPosition);
+btnRemoveC.addEventListener("click", ()=> removePiece('C'));
 
 
 let curBluePosition = -1;
+
+function removePiece(char){
+    let usedPiece = board.piecesUsed.get(char);
+    if(usedPiece === undefined){
+        throw new Error('That piece is not used');
+    }
+    board.removePiece(usedPiece);
+    curBluePosition = -1;
+    drawBoard();
+}
 
 function placeNextPosition(){
     let usedPiece = board.piecesUsed.get('C');
