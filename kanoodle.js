@@ -114,7 +114,7 @@ export class Piece{
         for (let i = 0; i < t.length; i++) {
             let nodeMatch = false;
             for (let j = 0; j < p.length; j++) {
-                if(t[i].offset === p[j].offset){
+                if(t[i].offset.x === p[j].offset.x && t[i].offset.y === p[j].offset.y && t[i].offset.z === p[j].offset.z){
                     nodeMatch = true;
                     break;
                 }                
@@ -230,9 +230,9 @@ export class PieceRegistry{
 }
 
 export class Board{
-    boardMap = [];
-    usedLocations = [];
-    piecesUsed = [];
+    boardMap = new Map();
+    usedLocations = new Map();
+    piecesUsed = new Map();
     pieceRegistry = new PieceRegistry();
 
     constructor(){
@@ -240,45 +240,42 @@ export class Board{
     }
 
     initializeBoard(){
-        this.boardMap = [];
+        this.boardMap = new Map();
 
         for (let i = 0; i < 6; i++) {
             for (let j = 0; j < 6; j++) {
                 for (let k = 0; k < 6; k++) {
                     
                     if (i + j + k < 6){
-                        this.boardMap.push({ x: i, y: j, z: k, value : '-' }) ;
+                        this.boardMap.set(`${i}${j}${k}`, { x: i, y: j, z: k, value : '-' })
                     } else{
-                        this.boardMap.push({ x:i, y:j, z:k, value : ' ' }) ;
+                        this.boardMap.set(`${i}${j}${k}`, { x: i, y: j, z: k, value : ' ' })
                     }
                 }                
             }            
         }
 
-        this.piecesUsed = [];
-        this.usedLocations = [];
-    }
-
-    isPieceUsed(key){
-        return key in piecesUsed;
+        this.piecesUsed = new Map();
+        this.usedLocations = new Map();
     }
 
     getUnusedColors(){
-        return this.pieceRegistry.colors.filter(m=> !(this.isPieceUsed(m.key)))
+        return this.pieceRegistry.colors.filter(m=> !(this.piecesUsed.has(m.key)))
     }
 
     placePiece(piece){
         try {
             let abs = piece.getAbsolutePosition();
             for (let i = 0; i < abs.length; i++) {
-                let mapNode = this.boardMap.find(m=> m.x === abs[i].offset.x && m.y === abs[i].offset.y && m.z === abs[i].offset.z);
+                let loc = abs[i].offset;
+                let mapNode = this.boardMap.get(`${loc.x}${loc.y}${loc.z}`);
                 if(mapNode.value != '-'){
                     throw new Error("Attempt to add piece in used location");
                 }
                 mapNode.value = piece.character;
-                this.usedLocations.push(abs[i].offset);
+                this.usedLocations.set(`${loc.x}${loc.y}${loc.z}`, loc);
             }
-            this.piecesUsed[piece.character] = piece;
+            this.piecesUsed.set(piece.character, piece);
         } catch (error) {
             this.removePiece(piece);
             throw new Error('Error placing piece');
@@ -288,20 +285,12 @@ export class Board{
     removePiece(piece){
         let abs = piece.getAbsolutePosition();
         for (let i = 0; i < abs.length; i++) {
-            let mapNode = this.boardMap.find(m=> m.x === abs[i].offset.x && m.y === abs[i].offset.y && m.z === abs[i].offset.z);
-            mapNode.value = '-';
-            let temp = [];
-            for (let j = 0; j < this.usedLocations.length; j++) {
-                let loc = this.usedLocations[j];
-                if(loc.x === mapNode.x && loc.y === mapNode.y && loc.z === mapNode.z){
-                    continue;
-                } else{
-                    temp.push(loc);
-                }                
-            }
-            this.usedLocations = temp;
+            let loc = abs[i].offset;
+            let mapNode = this.boardMap.get(`${loc.x}${loc.y}${loc.z}`);
+            mapNode.value = '-';      
+            this.usedLocations.delete(`${loc.x}${loc.y}${loc.z}`);
         }
-        delete this.piecesUsed[piece.character]; 
+        this.piecesUsed.delete(piece.character); 
     }
 }
 

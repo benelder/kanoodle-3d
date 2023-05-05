@@ -83,9 +83,9 @@ function getMaterial(val){
 
 function drawBoard(){
     clearBoard();
-    for(var i = 0; i<board.boardMap.length; i++)
+    for(let [key, value] of board.boardMap)
     {
-        var node = board.boardMap[i];
+        var node = board.boardMap.get(key);
         if(node.value != ' ' && node.value != '-'){
             var geometry = new THREE.SphereGeometry(radius, 32, 32);
             var material = getMaterial(node.value);
@@ -125,7 +125,7 @@ prevBtn.addEventListener("click", placePrevPosition);
 let curBluePosition = -1;
 
 function placeNextPosition(){
-    let usedPiece = board.piecesUsed['C'];
+    let usedPiece = board.piecesUsed.get('C');
     if(usedPiece !== undefined){
         board.removePiece(usedPiece);
     }
@@ -138,7 +138,7 @@ function placeNextPosition(){
 }
 
 function placePrevPosition(){
-    let usedPiece = board.piecesUsed['C'];
+    let usedPiece = board.piecesUsed.get('C');
     if(usedPiece !== undefined){
         board.removePiece(usedPiece);
     }
