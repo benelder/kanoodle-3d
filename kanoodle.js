@@ -129,17 +129,16 @@ export class Piece{
 }
 
 export class PieceRegistry{
-    darkBluePositions = [];
-    colors = [];
+    colors = new Map();
 
     constructor(){
         this.#loadPossiblePositions()
     }
 
     #loadPossiblePositions(){
-        this.darkBluePositions = this.#loadPositionsForColor(function(){return new DarkBlue();});
-
-        this.colors['C'] = this.darkBluePositions;
+        for(let [key, value] of pieceHelper){
+            this.colors.set(key, this.#loadPositionsForColor(value.ctor))
+        }
     }
 
     #loadPositionsForColor(constr){
@@ -294,6 +293,10 @@ export class Board{
     }
 }
 
+const pieceHelper = new Map();
+pieceHelper.set('C', { ctor : () => { return new DarkBlue();}} );
+pieceHelper.set('K', { ctor : () => { return new Gray();}} );
+
 export class DarkBlue extends Piece{
     constructor(){
         const nodes = [ 
@@ -303,6 +306,17 @@ export class DarkBlue extends Piece{
             new Atom(2,1,0),
             new Atom(2,2,0)];
         super(new Location(0,0,0), 0, 0, nodes, 'DarkBlue', 'C');
+    }
+}
+
+export class Gray extends Piece{
+    constructor(){
+        const nodes = [ 
+            new Atom(0,0,0), 
+            new Atom(1,0,0),
+            new Atom(0,1,0),
+            new Atom(1,1,0)];
+        super(new Location(0,0,0), 0, 0, nodes, 'Gray', 'K');
     }
 }
 
