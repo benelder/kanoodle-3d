@@ -126,13 +126,15 @@ function updateControlPanel(){
                 // hide add button
                 const btnAdd = document.getElementById('btnAdd' + key);
                 btnAdd.style.display = 'none';
-                // show next, prev, remove buttons
+                // show next, prev, remove, set buttons
                 const btnNext = document.getElementById('btnNext' + key);
                 btnNext.style.display = 'inline';
                 const btnPrev = document.getElementById('btnPrev' + key);
                 btnPrev.style.display = 'inline';
                 const btnRemove = document.getElementById('btnRemove' + key);
                 btnRemove.style.display = 'inline';
+                const btnSet = document.getElementById('btnSet' + key);
+                btnSet.style.display = 'inline';
             }
         }
         else{
@@ -196,18 +198,16 @@ for(let [key, value] of board.pieceRegistry.colors){
     btnRemove.addEventListener('click', ()=> removePiece(key));
     colorContainer.appendChild(btnRemove);
 
+    const btnSet = document.createElement('button');
+    btnSet.innerText = 'Set';
+    btnSet.id = 'btnSet' + key;
+    btnSet.style.display = 'none';
+    btnSet.addEventListener('click', ()=> setPiece(key));
+    colorContainer.appendChild(btnSet);
+
 
     controlPanel.appendChild(colorContainer);
 }
-
-// var btnAddC = document.getElementById('btnAddC');
-// var btnPrevC = document.getElementById('btnPrevC');
-// var btnNextC = document.getElementById('btnNextC');
-// var btnRemoveC = document.getElementById('btnRemoveC');
-// btnAddC.addEventListener("click", placeNextPosition('C'));
-// btnNextC.addEventListener("click", placeNextPosition('C'));
-// btnPrevC.addEventListener("click", placePrevPosition);
-// btnRemoveC.addEventListener("click", ()=> removePiece('C'));
 
 function removePiece(char){
     let usedPiece = board.piecesUsed.get(char);
@@ -217,7 +217,15 @@ function removePiece(char){
         throw new Error('That piece is not used');
     }
     board.removePiece(usedPiece);
-    color.vposIndex = -1;
+    color.vposIndex = 0;
+    this.placingPiece = null;
+    drawBoard();
+}
+
+function setPiece(char){
+    color.vposIndex = 0;
+    this.placingPiece = null;
+    // update valid positions
     drawBoard();
 }
 
