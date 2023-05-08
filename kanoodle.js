@@ -137,7 +137,11 @@ export class PieceRegistry{
 
     #loadPossiblePositions(){
         for(let [key, value] of pieceHelper){
-            this.colors.set(key, this.#loadPositionsForColor(value.ctor))
+            this.colors.set(key, {
+                allpositions: this.#loadPositionsForColor(value.ctor), 
+                validPositions: this.#loadPositionsForColor(value.ctor), 
+                vposIndex : -1
+            })
         }
     }
 
@@ -204,7 +208,7 @@ export class PieceRegistry{
                                 }
                             }
 
-                            piece = new constr();
+                            piece = constr();
                             piece.rootPosition = new Location(x,y,z);
                             piece.plane = p;
                             piece.rotation = r;

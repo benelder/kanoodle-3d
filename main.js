@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import {OrbitControls}  from 'OrbitControls'
 import {Board} from './kanoodle.js'
 
+let placingPiece = null;
+
 // Set up the scene
 var scene = new THREE.Scene();
 
@@ -102,15 +104,41 @@ function drawBoard(){
 }
 
 function updateControlPanel(){
-    var btnAddC = document.getElementById('btnAddC');
-    var btnRemoveC = document.getElementById('btnRemoveC');
-    var btnNextC = document.getElementById('btnNextC');
-    var btnPrevC = document.getElementById('btnPrevC');
+    // var btnAddC = document.getElementById('btnAddC');
+    // var btnRemoveC = document.getElementById('btnRemoveC');
+    // var btnNextC = document.getElementById('btnNextC');
+    // var btnPrevC = document.getElementById('btnPrevC');
 
-    btnAddC.disabled = board.piecesUsed.has('C');
-    btnRemoveC.disabled = !board.piecesUsed.has('C');
-    btnNextC.disabled = !board.piecesUsed.has('C');
-    btnPrevC.disabled = !board.piecesUsed.has('C');
+    // btnAddC.disabled = board.piecesUsed.has('C');
+    // btnRemoveC.disabled = !board.piecesUsed.has('C');
+    // btnNextC.disabled = !board.piecesUsed.has('C');
+    // btnPrevC.disabled = !board.piecesUsed.has('C');
+    
+    for(let [key, value] of board.pieceRegistry.colors){
+        // are we in placing mode?
+        if(placingPiece != null){
+            if(key !== placingPiece){
+                // disable controls for pieces we are not actively placing
+                const colorContainer = document.getElementById('colorContainer' + key);
+                colorContainer.style.display = 'none';
+            }
+            else{
+                // hide add button
+                const btnAdd = document.getElementById('btnAdd' + key);
+                btnAdd.style.display = 'none';
+                // show next, prev, remove buttons
+                const btnNext = document.getElementById('btnNext' + key);
+                btnNext.style.display = 'inline';
+                const btnPrev = document.getElementById('btnPrev' + key);
+                btnPrev.style.display = 'inline';
+                const btnRemove = document.getElementById('btnRemove' + key);
+                btnRemove.style.display = 'inline';
+            }
+        }
+        else{
+
+        }
+    }
 
 }
 
@@ -130,51 +158,123 @@ function render() {
     controls.update(); // Update the controls
 }
 
-var btnPrevC = document.getElementById('btnPrevC');
-var btnNextC = document.getElementById('btnNextC');
-var btnAddC = document.getElementById('btnAddC');
-var btnRemoveC = document.getElementById('btnRemoveC');
-btnNextC.addEventListener("click", placeNextPosition);
-btnAddC.addEventListener("click", placeNextPosition);
-btnPrevC.addEventListener("click", placePrevPosition);
-btnRemoveC.addEventListener("click", ()=> removePiece('C'));
+
+for(let [key, value] of board.pieceRegistry.colors){
+    const controlPanel = document.getElementById("controlPanel");
+
+    const colorContainer = document.createElement('div');
+    colorContainer.id = 'colorContainer' + key;
+
+    const lbl = document.createElement('label');
+    lbl.innerText = key;
+    colorContainer.appendChild(lbl);
+
+    const btnAdd = document.createElement('button');
+    btnAdd.innerText = 'Add';
+    btnAdd.id = 'btnAdd' + key;
+    btnAdd.addEventListener('click', ()=> initiatePlacing(key));    
+    colorContainer.appendChild(btnAdd);
+
+    const btnNext = document.createElement('button');
+    btnNext.innerText = 'Next';
+    btnNext.id = 'btnNext' + key;
+    btnNext.style.display = 'none';
+    btnNext.addEventListener('click', ()=> placeNextPosition(key));
+    colorContainer.appendChild(btnNext);
+
+    const btnPrev = document.createElement('button');
+    btnPrev.innerText = 'Prev';
+    btnPrev.id = 'btnPrev' + key;
+    btnPrev.style.display = 'none';
+    btnPrev.addEventListener('click', ()=> placePrevPosition(key));
+    colorContainer.appendChild(btnPrev);
+
+    const btnRemove = document.createElement('button');
+    btnRemove.innerText = 'Remove';
+    btnRemove.id = 'btnRemove' + key;
+    btnRemove.style.display = 'none';
+    btnRemove.addEventListener('click', ()=> removePiece(key));
+    colorContainer.appendChild(btnRemove);
 
 
-let curBluePosition = -1;
+    controlPanel.appendChild(colorContainer);
+}
+
+// var btnAddC = document.getElementById('btnAddC');
+// var btnPrevC = document.getElementById('btnPrevC');
+// var btnNextC = document.getElementById('btnNextC');
+// var btnRemoveC = document.getElementById('btnRemoveC');
+// btnAddC.addEventListener("click", placeNextPosition('C'));
+// btnNextC.addEventListener("click", placeNextPosition('C'));
+// btnPrevC.addEventListener("click", placePrevPosition);
+// btnRemoveC.addEventListener("click", ()=> removePiece('C'));
 
 function removePiece(char){
     let usedPiece = board.piecesUsed.get(char);
+    let color = board.pieceRegistry.colors.get(i);
+
     if(usedPiece === undefined){
         throw new Error('That piece is not used');
     }
     board.removePiece(usedPiece);
-    curBluePosition = -1;
+    color.vposIndex = -1;
     drawBoard();
 }
 
-function placeNextPosition(){
-    let usedPiece = board.piecesUsed.get('C');
+function initiatePlacing(i){
+    let usedPiece = board.piecesUsed.get(i);
+    let color = board.pieceRegistry.colors.get(i);
+
     if(usedPiece !== undefined){
-        board.removePiece(usedPiece);
+        throw new Error('That piece is already used');
     }
-    curBluePosition++;
-    if(curBluePosition > board.pieceRegistry.darkBluePositions.length){
-        curBluePosition = 0;
+
+    if(color.validPositions.length == 0){
+        throw new Error('No valid positions exist for that color');
     }
-    board.placePiece(board.pieceRegistry.darkBluePositions[curBluePosition]);
+
+    color.vposIndex = 0;
+
+    board.placePiece(color.validPositions[color.vposIndex]);
+
+    placingPiece = i;
+
     drawBoard();
 }
 
-function placePrevPosition(){
-    let usedPiece = board.piecesUsed.get('C');
+function placeNextPosition(i){
+    let usedPiece = board.piecesUsed.get(i);
+    let color = board.pieceRegistry.colors.get(i);
+
     if(usedPiece !== undefined){
         board.removePiece(usedPiece);
     }
-    curBluePosition--;
-    if(curBluePosition < 0){
-        curBluePosition = board.pieceRegistry.darkBluePositions.length;
+
+    color.vposIndex++;
+
+    if(color.vposIndex > color.validPositions.length){
+        color.vposIndex = 0;
     }
-    board.placePiece(board.pieceRegistry.darkBluePositions[curBluePosition]);
+    board.placePiece(color.validPositions[color.vposIndex]);
     drawBoard();
 }
+
+function placePrevPosition(i){
+    let usedPiece = board.piecesUsed.get(i);
+    let color = board.pieceRegistry.colors.get(i);
+
+    if(usedPiece !== undefined){
+        board.removePiece(usedPiece);
+    }
+
+    color.vposIndex--;
+
+    if(color.vposIndex < 0){
+        color.vposIndex = color.validPositions.length;
+    }
+    board.placePiece(color.validPositions[color.vposIndex]);
+    drawBoard();
+}
+
+
 render();
