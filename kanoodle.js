@@ -314,8 +314,18 @@ export class Board{
 }
 
 const pieceHelper = new Map();
+pieceHelper.set('A', { ctor : () => { return new Lime();}} );
+pieceHelper.set('B', { ctor : () => { return new Yellow();}} );
 pieceHelper.set('C', { ctor : () => { return new DarkBlue();}} );
+pieceHelper.set('D', { ctor : () => { return new LightBlue();}} );
+pieceHelper.set('E', { ctor : () => { return new Red();}} );
+pieceHelper.set('F', { ctor : () => { return new Pink();}} );
+pieceHelper.set('G', { ctor : () => { return new Green();}} );
+pieceHelper.set('H', { ctor : () => { return new White();}} );
+pieceHelper.set('I', { ctor : () => { return new Orange();}} );
+pieceHelper.set('J', { ctor : () => { return new Peach();}} );
 pieceHelper.set('K', { ctor : () => { return new Gray();}} );
+pieceHelper.set('L', { ctor : () => { return new Purple();}} );
 
 export class DarkBlue extends Piece{
     constructor(){
@@ -337,6 +347,123 @@ export class Gray extends Piece{
             new Atom(0,1,0),
             new Atom(1,1,0)];
         super(new Location(0,0,0), 0, 0, nodes, 'Gray', 'K');
+    }
+}
+
+export class Red extends Piece{
+    constructor(){
+        const nodes = [ 
+            new Atom(0,0,0), 
+            new Atom(1,0,0),
+            new Atom(2,0,0),
+            new Atom(0,1,0),
+            new Atom(1,1,0)];
+        super(new Location(0,0,0), 0, 0, nodes, 'Red', 'E');
+    }
+}
+
+export class Green extends Piece{
+    constructor(){
+        const nodes = [ 
+            new Atom(0,0,0), 
+            new Atom(1,0,0),
+            new Atom(2,0,0),
+            new Atom(0,1,0),
+            new Atom(2,1,0)];
+        super(new Location(0,0,0), 0, 0, nodes, 'Green', 'G');
+    }
+}
+
+export class LightBlue extends Piece{
+    constructor(){
+        const nodes = [ 
+            new Atom(0,0,0), 
+            new Atom(1,0,0),
+            new Atom(2,0,0),
+            new Atom(3,0,0),
+            new Atom(0,1,0)];
+        super(new Location(0,0,0), 0, 0, nodes, 'LightBlue', 'D');
+    }
+}
+
+export class Lime extends Piece{
+    constructor(){
+        const nodes = [ 
+            new Atom(0,0,0), 
+            new Atom(1,0,0),
+            new Atom(1,1,0),
+            new Atom(1,2,0),
+            new Atom(2,1,0)];
+        super(new Location(0,0,0), 0, 0, nodes, 'Lime', 'A');
+    }
+}
+
+export class Orange extends Piece{
+    constructor(){
+        const nodes = [ 
+            new Atom(0,0,0), 
+            new Atom(1,0,0),
+            new Atom(1,1,0),
+            new Atom(1,2,0)];
+        super(new Location(0,0,0), 0, 0, nodes, 'Orange', 'I');
+    }
+}
+
+export class Peach extends Piece{
+    constructor(){
+        const nodes = [ 
+            new Atom(0,0,0), 
+            new Atom(1,0,0),
+            new Atom(1,1,0),
+            new Atom(2,1,0)];
+        super(new Location(0,0,0), 0, 0, nodes, 'Peach', 'J');
+    }
+}
+
+export class Pink extends Piece{
+    constructor(){
+        const nodes = [ 
+            new Atom(0,0,0), 
+            new Atom(1,0,0),
+            new Atom(2,0,0),
+            new Atom(3,0,0),
+            new Atom(1,1,0)];
+        super(new Location(0,0,0), 0, 0, nodes, 'Pink', 'F');
+    }
+}
+
+export class Purple extends Piece{
+    constructor(){
+        const nodes = [ 
+            new Atom(0,0,0), 
+            new Atom(1,0,0),
+            new Atom(2,0,0),
+            new Atom(1,1,0)];
+        super(new Location(0,0,0), 0, 0, nodes, 'Purple', 'L');
+    }
+}
+
+export class White extends Piece{
+    constructor(){
+        const nodes = [ 
+            new Atom(0,0,0), 
+            new Atom(1,0,0),
+            new Atom(2,0,0),
+            new Atom(0,1,0),
+            new Atom(0,2,0)];
+        super(new Location(0,0,0), 0, 0, nodes, 'White', 'H');
+    }
+}
+
+export class Yellow extends Piece{
+    constructor(){
+        const nodes = [ 
+            new Atom(0,0,0), 
+            new Atom(1,0,0),
+            new Atom(2,0,0),
+            new Atom(1,1,0),
+            new Atom(2,1,0)];
+        super(new Location(0,0,0), 0, 0, nodes, 'Yellow', 'B');
     }
 }
 

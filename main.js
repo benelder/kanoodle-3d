@@ -172,8 +172,13 @@ function updateControlPanel(){
     // btnPrevC.disabled = !board.piecesUsed.has('C');
     
     for(let [key, value] of board.pieceRegistry.colors){
+
+        // reset some controls
         const colorContainer = document.getElementById('colorContainer' + key);
         colorContainer.style.display = 'block';
+        const btnAdd = document.getElementById('btnAdd' + key);
+        btnAdd.disabled = false;
+
         // are we in placing mode?
         if(placingPiece != null){
             if(key !== placingPiece){
@@ -182,8 +187,7 @@ function updateControlPanel(){
                 colorContainer.style.display = 'none';
             }
             else{
-                // hide add button
-                const btnAdd = document.getElementById('btnAdd' + key);
+                // actively placing, hide add button
                 btnAdd.style.display = 'none';
                 // show next, prev, remove, set buttons
                 const btnNext = document.getElementById('btnNext' + key);
@@ -200,7 +204,6 @@ function updateControlPanel(){
             // in piece select mode
 
             if(board.piecesUsed.has(key)){
-                const btnAdd = document.getElementById('btnAdd' + key);
                 btnAdd.style.display = 'none';
                 const btnNext = document.getElementById('btnNext' + key);
                 btnNext.style.display = 'none';
@@ -213,8 +216,12 @@ function updateControlPanel(){
                 const lbl = document.getElementById('lbl' + key);
                 lbl.innerText = key + ' (placed)';
             }else{
-                const btnAdd = document.getElementById('btnAdd' + key);
                 btnAdd.style.display = 'inline';
+
+                if(value.validPositions.length == 0){
+                    btnAdd.disabled = true;
+                }
+
                 const btnNext = document.getElementById('btnNext' + key);
                 btnNext.style.display = 'none';
                 const btnPrev = document.getElementById('btnPrev' + key);
