@@ -2,6 +2,64 @@ import * as THREE from 'three';
 import {OrbitControls}  from 'OrbitControls'
 import {Board} from './kanoodle.js'
 
+
+let board = new Board();
+
+// add control panel
+for(let [key, value] of board.pieceRegistry.colors){
+    const controlPanel = document.getElementById("controlPanel");
+
+    const colorContainer = document.createElement('div');
+    colorContainer.id = 'colorContainer' + key;
+
+    const lbl = document.createElement('label');
+    lbl.id= 'lbl' + key;
+    if(board.piecesUsed.has(key)){
+        lbl.innerText = key;
+    } else{
+        lbl.innerText = key + '(' + board.pieceRegistry.colors.get(key).validPositions.length  + ')';
+    }
+    colorContainer.appendChild(lbl);
+
+    const btnAdd = document.createElement('button');
+    btnAdd.innerText = 'Add';
+    btnAdd.id = 'btnAdd' + key;
+    btnAdd.addEventListener('click', ()=> initiatePlacing(key));    
+    colorContainer.appendChild(btnAdd);
+
+    const btnNext = document.createElement('button');
+    btnNext.innerText = 'Next';
+    btnNext.id = 'btnNext' + key;
+    btnNext.style.display = 'none';
+    btnNext.addEventListener('click', ()=> placeNextPosition(key));
+    colorContainer.appendChild(btnNext);
+
+    const btnPrev = document.createElement('button');
+    btnPrev.innerText = 'Prev';
+    btnPrev.id = 'btnPrev' + key;
+    btnPrev.style.display = 'none';
+    btnPrev.addEventListener('click', ()=> placePrevPosition(key));
+    colorContainer.appendChild(btnPrev);
+
+    const btnRemove = document.createElement('button');
+    btnRemove.innerText = 'Remove';
+    btnRemove.id = 'btnRemove' + key;
+    btnRemove.style.display = 'none';
+    btnRemove.addEventListener('click', ()=> removePiece(key));
+    colorContainer.appendChild(btnRemove);
+
+    const btnSet = document.createElement('button');
+    btnSet.innerText = 'Set';
+    btnSet.id = 'btnSet' + key;
+    btnSet.style.display = 'none';
+    btnSet.addEventListener('click', ()=> setPiece(key));
+    colorContainer.appendChild(btnSet);
+
+
+    controlPanel.appendChild(colorContainer);
+}
+
+
 let placingPiece = null;
 
 // Set up the scene
@@ -34,7 +92,6 @@ var distancej = 3.3;
 var distancek = 3.3;
 var spheres = [];
 
-let board = new Board();
 
 // Set up the material with gray color
 drawBoard();
@@ -115,10 +172,12 @@ function updateControlPanel(){
     // btnPrevC.disabled = !board.piecesUsed.has('C');
     
     for(let [key, value] of board.pieceRegistry.colors){
+        const colorContainer = document.getElementById('colorContainer' + key);
+        colorContainer.style.display = 'block';
         // are we in placing mode?
         if(placingPiece != null){
             if(key !== placingPiece){
-                // disable controls for pieces we are not actively placing
+                // disable all controls for pieces we are not actively placing
                 const colorContainer = document.getElementById('colorContainer' + key);
                 colorContainer.style.display = 'none';
             }
@@ -138,7 +197,37 @@ function updateControlPanel(){
             }
         }
         else{
+            // in piece select mode
 
+            if(board.piecesUsed.has(key)){
+                const btnAdd = document.getElementById('btnAdd' + key);
+                btnAdd.style.display = 'none';
+                const btnNext = document.getElementById('btnNext' + key);
+                btnNext.style.display = 'none';
+                const btnPrev = document.getElementById('btnPrev' + key);
+                btnPrev.style.display = 'none';
+                const btnRemove = document.getElementById('btnRemove' + key);
+                btnRemove.style.display = 'inline';
+                const btnSet = document.getElementById('btnSet' + key);
+                btnSet.style.display = 'none';
+                const lbl = document.getElementById('lbl' + key);
+                lbl.innerText = key + ' (placed)';
+            }else{
+                const btnAdd = document.getElementById('btnAdd' + key);
+                btnAdd.style.display = 'inline';
+                const btnNext = document.getElementById('btnNext' + key);
+                btnNext.style.display = 'none';
+                const btnPrev = document.getElementById('btnPrev' + key);
+                btnPrev.style.display = 'none';
+                const btnRemove = document.getElementById('btnRemove' + key);
+                btnRemove.style.display = 'none';
+                const btnSet = document.getElementById('btnSet' + key);
+                btnSet.style.display = 'none';
+                const lbl = document.getElementById('lbl' + key);
+                lbl.innerText = key + '(' + board.pieceRegistry.colors.get(key).validPositions.length  + ')';
+            }
+
+            // show "Add" button for unused pieces
         }
     }
 
@@ -161,71 +250,27 @@ function render() {
 }
 
 
-for(let [key, value] of board.pieceRegistry.colors){
-    const controlPanel = document.getElementById("controlPanel");
 
-    const colorContainer = document.createElement('div');
-    colorContainer.id = 'colorContainer' + key;
-
-    const lbl = document.createElement('label');
-    lbl.innerText = key;
-    colorContainer.appendChild(lbl);
-
-    const btnAdd = document.createElement('button');
-    btnAdd.innerText = 'Add';
-    btnAdd.id = 'btnAdd' + key;
-    btnAdd.addEventListener('click', ()=> initiatePlacing(key));    
-    colorContainer.appendChild(btnAdd);
-
-    const btnNext = document.createElement('button');
-    btnNext.innerText = 'Next';
-    btnNext.id = 'btnNext' + key;
-    btnNext.style.display = 'none';
-    btnNext.addEventListener('click', ()=> placeNextPosition(key));
-    colorContainer.appendChild(btnNext);
-
-    const btnPrev = document.createElement('button');
-    btnPrev.innerText = 'Prev';
-    btnPrev.id = 'btnPrev' + key;
-    btnPrev.style.display = 'none';
-    btnPrev.addEventListener('click', ()=> placePrevPosition(key));
-    colorContainer.appendChild(btnPrev);
-
-    const btnRemove = document.createElement('button');
-    btnRemove.innerText = 'Remove';
-    btnRemove.id = 'btnRemove' + key;
-    btnRemove.style.display = 'none';
-    btnRemove.addEventListener('click', ()=> removePiece(key));
-    colorContainer.appendChild(btnRemove);
-
-    const btnSet = document.createElement('button');
-    btnSet.innerText = 'Set';
-    btnSet.id = 'btnSet' + key;
-    btnSet.style.display = 'none';
-    btnSet.addEventListener('click', ()=> setPiece(key));
-    colorContainer.appendChild(btnSet);
-
-
-    controlPanel.appendChild(colorContainer);
-}
 
 function removePiece(char){
     let usedPiece = board.piecesUsed.get(char);
-    let color = board.pieceRegistry.colors.get(i);
+    let color = board.pieceRegistry.colors.get(char);
 
     if(usedPiece === undefined){
         throw new Error('That piece is not used');
     }
     board.removePiece(usedPiece);
     color.vposIndex = 0;
-    this.placingPiece = null;
+    placingPiece = null;
+    updateAllValidPositions();
     drawBoard();
 }
 
 function setPiece(char){
+    let color = board.pieceRegistry.colors.get(char);
     color.vposIndex = 0;
-    this.placingPiece = null;
-    // update valid positions
+    placingPiece = null;
+    updateAllValidPositions();
     drawBoard();
 }
 
@@ -284,5 +329,21 @@ function placePrevPosition(i){
     drawBoard();
 }
 
+function updateAllValidPositions(){
+    for(let [key, value] of board.pieceRegistry.colors){
+        if(board.piecesUsed.has(key)){
+            continue; // only updating valid positions indexes of pieces that have not been used
+        }
+        else{
+            value.validPositions = [];
+            for (let i = 0; i < value.allPositions.length; i++) {
+                const piece = value.allPositions[i];
+                if(!board.collision(piece)){
+                    value.validPositions.push(piece);
+                }
+            }
+        }
+    }
+}
 
 render();

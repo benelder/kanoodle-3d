@@ -138,7 +138,7 @@ export class PieceRegistry{
     #loadPossiblePositions(){
         for(let [key, value] of pieceHelper){
             this.colors.set(key, {
-                allpositions: this.#loadPositionsForColor(value.ctor), 
+                allPositions: this.#loadPositionsForColor(value.ctor), 
                 validPositions: this.#loadPositionsForColor(value.ctor), 
                 vposIndex : -1
             })
@@ -294,6 +294,22 @@ export class Board{
             this.usedLocations.delete(`${loc.x}${loc.y}${loc.z}`);
         }
         this.piecesUsed.delete(piece.character); 
+    }
+
+    collision(piece){
+        let abs = piece.getAbsolutePosition();
+        let toRet = false;
+
+        for (let i = 0; i < abs.length; i++) {
+            let loc = abs[i].offset;
+            let mapNode = this.boardMap.get(`${loc.x}${loc.y}${loc.z}`);
+            if(mapNode.value != '-'){
+                toRet = true;
+                break;
+            }
+        }
+
+        return toRet;
     }
 }
 
