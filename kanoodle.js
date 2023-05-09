@@ -127,6 +127,18 @@ export class Piece{
 
         return true;
     }
+
+    usesX(x){
+        let toRet = false;
+        for (let i = 0; i < this.absolutePosition.length; i++) {
+            const node = this.absolutePosition[i];
+            if(node.offset.x == x){
+                toRet = true;
+                break;
+            }
+        }
+        return toRet;
+    }
 }
 
 export class PieceRegistry{

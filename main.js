@@ -216,6 +216,8 @@ function updateControlPanel(){
         }
         else{
             // in piece select mode
+            const ddlX = document.getElementById('ddlX');
+            ddlX.value = 'All';
 
             if(board.piecesUsed.has(key)){
                 btnAdd.style.display = 'none';
@@ -306,12 +308,15 @@ function initiatePlacing(i){
     let positions = color.validPositions;
 
     if(ddlX.value != "All"){
-        positions = positions.filter(m=> m.x == Number(ddlX.value));
+        positions = positions.filter(m=> m.usesX(Number(ddlX.value)));
     }
 
     if(positions.length == 0){
         throw new Error('No valid positions exist for that color');
     }
+
+    const lbl = document.getElementById('lbl' + i);
+    lbl.innerText = i + '(' + positions.length  + ')';
 
     color.vposIndex = 0;
 
@@ -330,12 +335,19 @@ function placeNextPosition(i){
         board.removePiece(usedPiece);
     }
 
+    let positions = color.validPositions;
+
+    if(ddlX.value != "All"){
+        positions = positions.filter(m=> m.usesX(Number(ddlX.value)));
+    }
+
     color.vposIndex++;
 
-    if(color.vposIndex > color.validPositions.length){
+    if(color.vposIndex >= positions.length){
         color.vposIndex = 0;
     }
-    board.placePiece(color.validPositions[color.vposIndex]);
+
+    board.placePiece(positions[color.vposIndex]);
     drawBoard();
 }
 
@@ -347,12 +359,18 @@ function placePrevPosition(i){
         board.removePiece(usedPiece);
     }
 
+    let positions = color.validPositions;
+
+    if(ddlX.value != "All"){
+        positions = positions.filter(m=> m.usesX(Number(ddlX.value)));
+    }
+
     color.vposIndex--;
 
     if(color.vposIndex < 0){
-        color.vposIndex = color.validPositions.length;
+        color.vposIndex = positions.length;
     }
-    board.placePiece(color.validPositions[color.vposIndex]);
+    board.placePiece(positions[color.vposIndex]);
     drawBoard();
 }
 
@@ -404,8 +422,13 @@ function solve(){
 
 function filterChanged(){
     const i = placingPiece;
+    const usedPiece = board.piecesUsed.get(placingPiece);
+    const color = board.pieceRegistry.colors.get(placingPiece);
     // remove placingPiece
-    removePiece(placingPiece);
+    board.removePiece(usedPiece);
+    color.vposIndex = 0;
+    drawBoard();
+
     initiatePlacing(i);
 
     //update count of validPositions
