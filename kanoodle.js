@@ -128,11 +128,13 @@ export class Piece{
         return true;
     }
 
-    usesX(x){
+    usesLocation(x, y, z){
         let toRet = false;
         for (let i = 0; i < this.absolutePosition.length; i++) {
             const node = this.absolutePosition[i];
-            if(node.offset.x == x){
+            if((x == null ? true : node.offset.x == x) && 
+                (y == null ? true : node.offset.y == y) &&
+                (z == null ? true : node.offset.z == z)){
                 toRet = true;
                 break;
             }

@@ -14,6 +14,10 @@ btnReset.addEventListener('click', ()=> reset());
 
 const ddlX = document.getElementById("ddlX");
 ddlX.addEventListener('change', () => filterChanged());
+const ddlY = document.getElementById("ddlY");
+ddlY.addEventListener('change', () => filterChanged());
+const ddlZ = document.getElementById("ddlZ");
+ddlZ.addEventListener('change', () => filterChanged());
 
 // add control panel
 for(let [key, value] of board.pieceRegistry.colors){
@@ -73,7 +77,6 @@ for(let [key, value] of board.pieceRegistry.colors){
 
 // Set up the scene
 const scene = new THREE.Scene();
-
 // Set up the camera
 //var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, -500, 100 );
@@ -100,7 +103,6 @@ const distancei = 4;
 const distancej = 3.3;
 const distancek = 3.3;
 
-// Set up the material with gray color
 drawBoard();
 
 
@@ -119,32 +121,33 @@ const axesHelper = new THREE.AxesHelper(50);
 scene.add(axesHelper);
 
 function getMaterial(val){
+    const s = 100;
     if(val == "A")
-        return new THREE.MeshLambertMaterial({ color: 0x7bc149 });
+        return new THREE.MeshPhongMaterial({ color: 0x7bc149, shininess: s });
     if(val == "B")
-        return new THREE.MeshLambertMaterial({ color: 0xdbd11a });
+        return new THREE.MeshPhongMaterial({ color: 0xdbd11a, shininess: s });
     if(val == "C")
-        return new THREE.MeshLambertMaterial({ color: 0x301adb });
+        return new THREE.MeshPhongMaterial({ color: 0x301adb, shininess: s });
     if(val == "D")
-        return new THREE.MeshLambertMaterial({ color: 0x1acbdb });
+        return new THREE.MeshPhongMaterial({ color: 0x1acbdb, shininess: s });
     if(val == "E")
-        return new THREE.MeshLambertMaterial({ color: 0xd60a18 });
+        return new THREE.MeshPhongMaterial({ color: 0xd60a18, shininess: s });
     if(val == "F")
-        return new THREE.MeshLambertMaterial({ color: 0xd60a7a });
+        return new THREE.MeshPhongMaterial({ color: 0xd60a7a, shininess: s });
     if(val == "G")
-        return new THREE.MeshLambertMaterial({ color: 0x074c06 });
+        return new THREE.MeshPhongMaterial({ color: 0x074c06, shininess: s });
     if(val == "H")
-        return new THREE.MeshLambertMaterial({ color: 0xededed });
+        return new THREE.MeshPhongMaterial({ color: 0xededed, shininess: s });
     if(val == "I")
-        return new THREE.MeshLambertMaterial({ color: 0xe25300 });
+        return new THREE.MeshPhongMaterial({ color: 0xe25300, shininess: s });
     if(val == "J")
-        return new THREE.MeshLambertMaterial({ color: 0xeda1b8 });
+        return new THREE.MeshPhongMaterial({ color: 0xeda1b8, shininess: s });
     if(val == "K")
-        return new THREE.MeshLambertMaterial({ color: 0x9b9b9b });
+        return new THREE.MeshPhongMaterial({ color: 0x9b9b9b, shininess: s });
     if(val == "L")
-        return new THREE.MeshLambertMaterial({ color: 0x7c26ff });
+        return new THREE.MeshPhongMaterial({ color: 0x7c26ff, shininess: s });
 
-    return new THREE.MeshLambertMaterial({ color: 0xDDDDDD });
+    return new THREE.MeshPhongMaterial({ color: 0xDDDDDD });
 }
 
 function drawBoard(){
@@ -209,8 +212,9 @@ function updateControlPanel(){
         }
         else{
             // in piece select mode
-            const ddlX = document.getElementById('ddlX');
             ddlX.value = 'All';
+            ddlY.value = 'All';
+            ddlZ.value = 'All';
 
             if(board.piecesUsed.has(key)){
                 btnAdd.style.display = 'none';
@@ -317,8 +321,11 @@ function initiatePlacing(i){
 
     let positions = color.validPositions;
 
-    if(ddlX.value != "All"){
-        positions = positions.filter(m=> m.usesX(Number(ddlX.value)));
+    if(ddlX.value != "All" || ddlY.value != "All" || ddlZ.value != "All"){
+        const x = ddlX.value == "All" ? null : Number(ddlX.value);
+        const y = ddlY.value == "All" ? null : Number(ddlY.value);
+        const z = ddlZ.value == "All" ? null : Number(ddlZ.value);
+        positions = positions.filter(m=> m.usesLocation(x, y, z));
     }
 
     if(positions.length == 0){
@@ -349,8 +356,11 @@ function placeNextPosition(i){
 
     let positions = color.validPositions;
 
-    if(ddlX.value != "All"){
-        positions = positions.filter(m=> m.usesX(Number(ddlX.value)));
+    if(ddlX.value != "All" || ddlY.value != "All" || ddlZ.value != "All"){
+        const x = ddlX.value == "All" ? null : Number(ddlX.value);
+        const y = ddlY.value == "All" ? null : Number(ddlY.value);
+        const z = ddlZ.value == "All" ? null : Number(ddlZ.value);
+        positions = positions.filter(m=> m.usesLocation(x, y, z));
     }
 
     color.vposIndex++;
@@ -373,14 +383,17 @@ function placePrevPosition(i){
 
     let positions = color.validPositions;
 
-    if(ddlX.value != "All"){
-        positions = positions.filter(m=> m.usesX(Number(ddlX.value)));
+    if(ddlX.value != "All" || ddlY.value != "All" || ddlZ.value != "All"){
+        const x = ddlX.value == "All" ? null : Number(ddlX.value);
+        const y = ddlY.value == "All" ? null : Number(ddlY.value);
+        const z = ddlZ.value == "All" ? null : Number(ddlZ.value);
+        positions = positions.filter(m=> m.usesLocation(x, y, z));
     }
 
     color.vposIndex--;
 
     if(color.vposIndex < 0){
-        color.vposIndex = positions.length;
+        color.vposIndex = positions.length - 1;
     }
     board.placePiece(positions[color.vposIndex]);
     drawBoard();
@@ -419,13 +432,11 @@ function solve(){
         const pos = pieces[i];
         if(!board.collision(pos)){
             board.placePiece(pos);
-            //updateAllValidPositions();
             const s = solve();
             if(s == true){
                 return true;
             }
             board.removePiece(pos);
-            //updateAllValidPositions();
         }
     }
 
