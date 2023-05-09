@@ -24,6 +24,7 @@ export class Piece{
     }
     mirrorX;
     lean;
+    absolutePosition;
 
     #applyLean(offset){
         if(this.lean === true){
@@ -85,7 +86,7 @@ export class Piece{
     }
 
     isOutOfBounds(){
-        let abs = this.getAbsolutePosition();
+        const abs = this.absolutePosition;
 
         if(abs.some((m) => m.offset.z < 0)){
             return true;
@@ -108,8 +109,8 @@ export class Piece{
             return false;
         }
 
-        let t = this.getAbsolutePosition();
-        let p = piece.getAbsolutePosition();
+        const t = this.absolutePosition;
+        const p = piece.absolutePosition;
 
         for (let i = 0; i < t.length; i++) {
             let nodeMatch = false;
@@ -167,6 +168,7 @@ export class PieceRegistry{
                             piece.rotation = r;
                             piece.lean = false;
                             piece.mirrorX = false;
+                            piece.absolutePosition = piece.getAbsolutePosition();
 
                             if (piece.isOutOfBounds() === false)
                             {
@@ -182,6 +184,7 @@ export class PieceRegistry{
                             piece.rotation = r;
                             piece.lean = true;
                             piece.mirrorX = false;
+                            piece.absolutePosition = piece.getAbsolutePosition();
 
                             if (piece.isOutOfBounds() === false)
                             {
@@ -199,6 +202,7 @@ export class PieceRegistry{
                             piece.rotation = r;
                             piece.lean = false;
                             piece.mirrorX = true;
+                            piece.absolutePosition = piece.getAbsolutePosition();
 
                             if (piece.isOutOfBounds() === false)
                             {
@@ -214,6 +218,7 @@ export class PieceRegistry{
                             piece.rotation = r;
                             piece.lean = true;
                             piece.mirrorX = true;
+                            piece.absolutePosition = piece.getAbsolutePosition();
 
                             if (piece.isOutOfBounds() === false)
                             {
@@ -280,7 +285,7 @@ export class Board{
 
     placePiece(piece){
         try {
-            const abs = piece.getAbsolutePosition();
+            const abs = piece.absolutePosition;
             for (let i = 0; i < abs.length; i++) {
                 const loc = abs[i].offset;
                 const mapNode = this.boardMap.get(`${loc.x}${loc.y}${loc.z}`);
@@ -298,7 +303,7 @@ export class Board{
     }
 
     removePiece(piece){
-        const abs = piece.getAbsolutePosition();
+        const abs = piece.absolutePosition;
         for (let i = 0; i < abs.length; i++) {
             const loc = abs[i].offset;
             const mapNode = this.boardMap.get(`${loc.x}${loc.y}${loc.z}`);
@@ -309,7 +314,7 @@ export class Board{
     }
 
     collision(piece){
-        const abs = piece.getAbsolutePosition();
+        const abs = piece.absolutePosition;
         let toRet = false;
 
         for (let i = 0; i < abs.length; i++) {
