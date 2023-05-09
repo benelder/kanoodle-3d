@@ -25,6 +25,7 @@ for(let [key, value] of board.pieceRegistry.colors){
 
     const colorContainer = document.createElement('div');
     colorContainer.id = 'colorContainer' + key;
+    colorContainer.className = 'color-container';
 
     const lbl = document.createElement('label');
     lbl.id= 'lbl' + key;

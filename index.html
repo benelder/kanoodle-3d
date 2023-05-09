@@ -13,7 +13,7 @@
 		}
 		
 		body {
-			font-family: Arial, sans-serif;
+			font-family: 'Courier New', Courier, monospace;
 			background-color: #f0f0f0;
 		}
 		
@@ -36,6 +36,19 @@
 			flex-basis: 75%;
 			height: 100vh;
 		}
+
+		.color-container{
+			margin-bottom: 4px;
+		}
+
+		.top-level-controls{
+			margin-bottom: 10px;
+		}
+
+		button{
+			margin-right: 5px;
+			padding: 2px 4px;
+		}
 		
 		canvas {
 			width: 100%;
@@ -56,8 +69,10 @@
 			<h2>Kanoodle Solver 3D</h2>
 			<p>Pieces</p>
 			<div id="controlPanel">
-				<button disabled="true" id="btnSolve">Solve</button>
-				<button id="btnReset">Reset</button>
+				<div class="top-level-controls">
+					<button disabled="true" id="btnSolve">Solve</button>
+					<button id="btnReset">Reset</button>
+				</div>
 			</div>
 			<div id="filters" style="display:none">
 				<label for="ddlX">X:</label>
