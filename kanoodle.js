@@ -347,6 +347,34 @@ export class Board{
         this.#initializeBoard();
         this.pieceRegistry.reset();
     }
+
+    solve(){
+        const unusedColors = this.getUnusedColors();
+    
+        if(unusedColors.size == 0){
+            return true;
+        }
+    
+        const pieces = unusedColors.values().next().value.validPositions;
+
+        if(pieces.length == 0){
+            return false;
+        }
+    
+        for (let i = 0; i < pieces.length; i++) {
+            const pos = pieces[i];
+            if(!this.collision(pos)){
+                this.placePiece(pos);
+                const s = this.solve();
+                if(s == true){
+                    return true;
+                }
+                this.removePiece(pos);
+            }
+        }
+    
+        return false;
+    }
 }
 
 const pieceHelper = new Map();

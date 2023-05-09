@@ -173,7 +173,7 @@ function drawBoard(){
 function updateControlPanel(){
 
     const btnSolve = document.getElementById('btnSolve');
-    btnSolve.disabled = board.piecesUsed.size < 4;
+    btnSolve.disabled = board.piecesUsed.size < 3;
     btnSolve.style.display = 'inline';
 
     const btnReset = document.getElementById('btnReset');
@@ -416,32 +416,7 @@ function updateAllValidPositions(){
     }
 }
 
-function solve(){
-    const unusedColors = board.getUnusedColors();
 
-    if(unusedColors.size == 0){
-        return true;
-    }
-
-    const pieces = unusedColors.values().next().value.validPositions;
-    if(pieces.length == 0){
-        return false;
-    }
-
-    for (let i = 0; i < pieces.length; i++) {
-        const pos = pieces[i];
-        if(!board.collision(pos)){
-            board.placePiece(pos);
-            const s = solve();
-            if(s == true){
-                return true;
-            }
-            board.removePiece(pos);
-        }
-    }
-
-    return false;
-}
 
 function filterChanged(){
     const i = placingPiece;
@@ -465,7 +440,7 @@ function filterChanged(){
 }
 
 function attemptSolve(){
-    const success = solve();
+    const success = board.solve();
     if(success){
         console.log("Successfully solved");
     } else{
