@@ -4,12 +4,16 @@ import {Board} from './kanoodle.js'
 
 
 const board = new Board();
+let placingPiece = null;
+
 const btnSolve = document.getElementById("btnSolve");
 btnSolve.addEventListener('click', ()=> attemptSolve());
 
 const btnReset = document.getElementById("btnReset");
 btnReset.addEventListener('click', ()=> reset());
 
+const ddlX = document.getElementById("ddlX");
+ddlX.addEventListener('change', () => filterChanged());
 
 // add control panel
 for(let [key, value] of board.pieceRegistry.colors){
@@ -66,9 +70,6 @@ for(let [key, value] of board.pieceRegistry.colors){
 
     controlPanel.appendChild(colorContainer);
 }
-
-
-let placingPiece = null;
 
 // Set up the scene
 const scene = new THREE.Scene();
@@ -170,9 +171,14 @@ function updateControlPanel(){
 
     const btnSolve = document.getElementById('btnSolve');
     btnSolve.disabled = board.piecesUsed.size < 4;
+    btnSolve.style.display = 'inline';
 
     const btnReset = document.getElementById('btnReset');
     btnReset.style.display = 'inline';
+
+    const filters = document.getElementById('filters');
+    filters.style.display = 'none';
+
     
     for(let [key, value] of board.pieceRegistry.colors){
 
@@ -186,6 +192,8 @@ function updateControlPanel(){
         // are we in placing mode?
         if(placingPiece != null){
             btnReset.style.display = 'none';
+            btnSolve.style.display = 'none';
+            filters.style.display = 'block';
 
             if(key !== placingPiece){
                 // disable all controls for pieces we are not actively placing
@@ -295,13 +303,19 @@ function initiatePlacing(i){
         throw new Error('That piece is already used');
     }
 
-    if(color.validPositions.length == 0){
+    let positions = color.validPositions;
+
+    if(ddlX.value != "All"){
+        positions = positions.filter(m=> m.x == Number(ddlX.value));
+    }
+
+    if(positions.length == 0){
         throw new Error('No valid positions exist for that color');
     }
 
     color.vposIndex = 0;
 
-    board.placePiece(color.validPositions[color.vposIndex]);
+    board.placePiece(positions[color.vposIndex]);
 
     placingPiece = i;
 
@@ -386,6 +400,15 @@ function solve(){
     }
 
     return false;
+}
+
+function filterChanged(){
+    const i = placingPiece;
+    // remove placingPiece
+    removePiece(placingPiece);
+    initiatePlacing(i);
+
+    //update count of validPositions
 }
 
 function attemptSolve(){
