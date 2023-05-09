@@ -3,9 +3,12 @@ import {OrbitControls}  from 'OrbitControls'
 import {Board} from './kanoodle.js'
 
 
-let board = new Board();
+const board = new Board();
 const btnSolve = document.getElementById("btnSolve");
 btnSolve.addEventListener('click', ()=> attemptSolve());
+
+const btnReset = document.getElementById("btnReset");
+btnReset.addEventListener('click', ()=> reset());
 
 
 // add control panel
@@ -17,11 +20,13 @@ for(let [key, value] of board.pieceRegistry.colors){
 
     const lbl = document.createElement('label');
     lbl.id= 'lbl' + key;
+
     if(board.piecesUsed.has(key)){
         lbl.innerText = key;
     } else{
         lbl.innerText = key + '(' + board.pieceRegistry.colors.get(key).validPositions.length  + ')';
     }
+
     colorContainer.appendChild(lbl);
 
     const btnAdd = document.createElement('button');
@@ -66,42 +71,40 @@ for(let [key, value] of board.pieceRegistry.colors){
 let placingPiece = null;
 
 // Set up the scene
-var scene = new THREE.Scene();
+const scene = new THREE.Scene();
 
 // Set up the camera
 //var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-var camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, -500, 100 );
+const camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, -500, 100 );
 camera.position.z = 1;
 camera.position.y= 1;
 camera.position.x = 1;
 
 
 // Set up the renderer
-var renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth * 0.70, window.innerHeight * .70);
 const rightPanel = document.querySelector('#right-panel');
 rightPanel.appendChild(renderer.domElement);
 
 // Set up the controls
-var controls = new OrbitControls(camera, renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
 controls.enablePan = true;
 controls.enableZoom = true;
 controls.enableRotate = true;
 
 // Set up the spheres
-var radius = 2;
-var distancei = 4;
-var distancej = 3.3;
-var distancek = 3.3;
-var spheres = [];
-
+const radius = 2;
+const distancei = 4;
+const distancej = 3.3;
+const distancek = 3.3;
 
 // Set up the material with gray color
 drawBoard();
 
 
 // Add ambient light to the scene
-var ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
 scene.add(ambientLight);
 
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
@@ -109,7 +112,7 @@ dirLight.position.set(10, 20, 0); // x, y, z
 scene.add(dirLight);
 
 // Create an AxesHelper
-var axesHelper = new THREE.AxesHelper(50);
+const axesHelper = new THREE.AxesHelper(50);
 
 // Add the AxesHelper to the scene
 scene.add(axesHelper);
@@ -145,17 +148,17 @@ function getMaterial(val){
 
 function drawBoard(){
     clearBoard();
-    for(let [key, value] of board.boardMap)
+    const values = board.boardMap.values();
+    for(let value of values)
     {
-        var node = board.boardMap.get(key);
-        if(node.value != ' ' && node.value != '-'){
-            var geometry = new THREE.SphereGeometry(radius, 32, 32);
-            var material = getMaterial(node.value);
-            var sphere = new THREE.Mesh(geometry, material);
+        if(value.value != ' ' && value.value != '-'){
+            const geometry = new THREE.SphereGeometry(radius, 32, 32);
+            const material = getMaterial(value.value);
+            const sphere = new THREE.Mesh(geometry, material);
             sphere.position.set(
-                    node.y * distancej  + (node.z),
-                    node.z * distancek,
-                    node.x * distancei + (node.y+node.z) * 2
+                    value.y * distancej  + (value.z),
+                    value.z * distancek,
+                    value.x * distancei + (value.y + value.z) * 2
             );
             scene.add(sphere);
         }
@@ -164,17 +167,12 @@ function drawBoard(){
 }
 
 function updateControlPanel(){
-    // var btnAddC = document.getElementById('btnAddC');
-    // var btnRemoveC = document.getElementById('btnRemoveC');
-    // var btnNextC = document.getElementById('btnNextC');
-    // var btnPrevC = document.getElementById('btnPrevC');
 
-    // btnAddC.disabled = board.piecesUsed.has('C');
-    // btnRemoveC.disabled = !board.piecesUsed.has('C');
-    // btnNextC.disabled = !board.piecesUsed.has('C');
-    // btnPrevC.disabled = !board.piecesUsed.has('C');
     const btnSolve = document.getElementById('btnSolve');
     btnSolve.disabled = board.piecesUsed.size < 4;
+
+    const btnReset = document.getElementById('btnReset');
+    btnReset.style.display = 'inline';
     
     for(let [key, value] of board.pieceRegistry.colors){
 
@@ -187,6 +185,8 @@ function updateControlPanel(){
 
         // are we in placing mode?
         if(placingPiece != null){
+            btnReset.style.display = 'none';
+
             if(key !== placingPiece){
                 // disable all controls for pieces we are not actively placing
                 const colorContainer = document.getElementById('colorContainer' + key);
@@ -266,8 +266,8 @@ function render() {
 
 
 function removePiece(char){
-    let usedPiece = board.piecesUsed.get(char);
-    let color = board.pieceRegistry.colors.get(char);
+    const usedPiece = board.piecesUsed.get(char);
+    const color = board.pieceRegistry.colors.get(char);
 
     if(usedPiece === undefined){
         throw new Error('That piece is not used');
@@ -280,7 +280,7 @@ function removePiece(char){
 }
 
 function setPiece(char){
-    let color = board.pieceRegistry.colors.get(char);
+    const color = board.pieceRegistry.colors.get(char);
     color.vposIndex = 0;
     placingPiece = null;
     updateAllValidPositions();
@@ -288,8 +288,8 @@ function setPiece(char){
 }
 
 function initiatePlacing(i){
-    let usedPiece = board.piecesUsed.get(i);
-    let color = board.pieceRegistry.colors.get(i);
+    const usedPiece = board.piecesUsed.get(i);
+    const color = board.pieceRegistry.colors.get(i);
 
     if(usedPiece !== undefined){
         throw new Error('That piece is already used');
@@ -309,8 +309,8 @@ function initiatePlacing(i){
 }
 
 function placeNextPosition(i){
-    let usedPiece = board.piecesUsed.get(i);
-    let color = board.pieceRegistry.colors.get(i);
+    const usedPiece = board.piecesUsed.get(i);
+    const color = board.pieceRegistry.colors.get(i);
 
     if(usedPiece !== undefined){
         board.removePiece(usedPiece);
@@ -326,8 +326,8 @@ function placeNextPosition(i){
 }
 
 function placePrevPosition(i){
-    let usedPiece = board.piecesUsed.get(i);
-    let color = board.pieceRegistry.colors.get(i);
+    const usedPiece = board.piecesUsed.get(i);
+    const color = board.pieceRegistry.colors.get(i);
 
     if(usedPiece !== undefined){
         board.removePiece(usedPiece);
@@ -360,17 +360,13 @@ function updateAllValidPositions(){
 }
 
 function solve(){
-    let unusedColors = board.getUnusedColors();
+    const unusedColors = board.getUnusedColors();
 
     if(unusedColors.size == 0){
         return true;
     }
 
-    // if(unusedColors.values().next().value == undefined){
-    //     console.log('here');
-    // }
-
-    let pieces = unusedColors.values().next().value.validPositions;
+    const pieces = unusedColors.values().next().value.validPositions;
     if(pieces.length == 0){
         return false;
     }
@@ -380,7 +376,7 @@ function solve(){
         if(!board.collision(pos)){
             board.placePiece(pos);
             //updateAllValidPositions();
-            let s = solve();
+            const s = solve();
             if(s == true){
                 return true;
             }
@@ -388,19 +384,22 @@ function solve(){
             //updateAllValidPositions();
         }
     }
-    
-    
 
     return false;
 }
 
 function attemptSolve(){
-    let success = solve();
+    const success = solve();
     if(success){
         console.log("Successfully solved");
     } else{
         console.log("Unsuccessful solve attempt - there are no valid solutions");
     }
+    drawBoard();
+}
+
+function reset(){
+    board.resetBoard();
     drawBoard();
 }
 

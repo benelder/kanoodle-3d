@@ -140,13 +140,13 @@ export class PieceRegistry{
             this.colors.set(key, {
                 allPositions: this.#loadPositionsForColor(value.ctor), 
                 validPositions: this.#loadPositionsForColor(value.ctor), 
-                vposIndex : -1
+                vposIndex : 0
             })
         }
     }
 
     #loadPositionsForColor(constr){
-        var toRet = [];
+        const toRet = [];
 
         for (let z = 0; z < 6; z++) // for each root position
         {
@@ -230,6 +230,14 @@ export class PieceRegistry{
 
         return toRet;
     }
+
+    reset(){
+        const values = this.colors.values();
+        for(let value of values){
+            value.validPositions = value.allPositions;
+            value.vposIndex = 0;
+        }
+    }
 }
 
 export class Board{
@@ -239,10 +247,10 @@ export class Board{
     pieceRegistry = new PieceRegistry();
 
     constructor(){
-        this.initializeBoard();
+        this.#initializeBoard();
     }
 
-    initializeBoard(){
+    #initializeBoard(){
         this.boardMap = new Map();
 
         for (let i = 0; i < 6; i++) {
@@ -272,10 +280,10 @@ export class Board{
 
     placePiece(piece){
         try {
-            let abs = piece.getAbsolutePosition();
+            const abs = piece.getAbsolutePosition();
             for (let i = 0; i < abs.length; i++) {
-                let loc = abs[i].offset;
-                let mapNode = this.boardMap.get(`${loc.x}${loc.y}${loc.z}`);
+                const loc = abs[i].offset;
+                const mapNode = this.boardMap.get(`${loc.x}${loc.y}${loc.z}`);
                 if(mapNode.value != '-'){
                     throw new Error("Attempt to add piece in used location");
                 }
@@ -290,10 +298,10 @@ export class Board{
     }
 
     removePiece(piece){
-        let abs = piece.getAbsolutePosition();
+        const abs = piece.getAbsolutePosition();
         for (let i = 0; i < abs.length; i++) {
-            let loc = abs[i].offset;
-            let mapNode = this.boardMap.get(`${loc.x}${loc.y}${loc.z}`);
+            const loc = abs[i].offset;
+            const mapNode = this.boardMap.get(`${loc.x}${loc.y}${loc.z}`);
             mapNode.value = '-';      
             this.usedLocations.delete(`${loc.x}${loc.y}${loc.z}`);
         }
@@ -301,12 +309,12 @@ export class Board{
     }
 
     collision(piece){
-        let abs = piece.getAbsolutePosition();
+        const abs = piece.getAbsolutePosition();
         let toRet = false;
 
         for (let i = 0; i < abs.length; i++) {
-            let loc = abs[i].offset;
-            let mapNode = this.boardMap.get(`${loc.x}${loc.y}${loc.z}`);
+            const loc = abs[i].offset;
+            const mapNode = this.boardMap.get(`${loc.x}${loc.y}${loc.z}`);
             if(mapNode.value != '-'){
                 toRet = true;
                 break;
@@ -314,6 +322,11 @@ export class Board{
         }
 
         return toRet;
+    }
+
+    resetBoard(){
+        this.#initializeBoard();
+        this.pieceRegistry.reset();
     }
 }
 
