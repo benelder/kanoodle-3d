@@ -4,6 +4,9 @@ import {Board} from './kanoodle.js'
 
 
 let board = new Board();
+const btnSolve = document.getElementById("btnSolve");
+btnSolve.addEventListener('click', ()=> attemptSolve());
+
 
 // add control panel
 for(let [key, value] of board.pieceRegistry.colors){
@@ -170,6 +173,8 @@ function updateControlPanel(){
     // btnRemoveC.disabled = !board.piecesUsed.has('C');
     // btnNextC.disabled = !board.piecesUsed.has('C');
     // btnPrevC.disabled = !board.piecesUsed.has('C');
+    const btnSolve = document.getElementById('btnSolve');
+    btnSolve.disabled = board.piecesUsed.size < 4;
     
     for(let [key, value] of board.pieceRegistry.colors){
 
@@ -178,6 +183,7 @@ function updateControlPanel(){
         colorContainer.style.display = 'block';
         const btnAdd = document.getElementById('btnAdd' + key);
         btnAdd.disabled = false;
+        
 
         // are we in placing mode?
         if(placingPiece != null){
@@ -351,6 +357,51 @@ function updateAllValidPositions(){
             }
         }
     }
+}
+
+function solve(){
+    let unusedColors = board.getUnusedColors();
+
+    if(unusedColors.size == 0){
+        return true;
+    }
+
+    // if(unusedColors.values().next().value == undefined){
+    //     console.log('here');
+    // }
+
+    let pieces = unusedColors.values().next().value.validPositions;
+    if(pieces.length == 0){
+        return false;
+    }
+
+    for (let i = 0; i < pieces.length; i++) {
+        const pos = pieces[i];
+        if(!board.collision(pos)){
+            board.placePiece(pos);
+            //updateAllValidPositions();
+            let s = solve();
+            if(s == true){
+                return true;
+            }
+            board.removePiece(pos);
+            //updateAllValidPositions();
+        }
+    }
+    
+    
+
+    return false;
+}
+
+function attemptSolve(){
+    let success = solve();
+    if(success){
+        console.log("Successfully solved");
+    } else{
+        console.log("Unsuccessful solve attempt - there are no valid solutions");
+    }
+    drawBoard();
 }
 
 render();

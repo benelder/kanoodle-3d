@@ -263,7 +263,11 @@ export class Board{
     }
 
     getUnusedColors(){
-        return this.pieceRegistry.colors.filter(m=> !(this.piecesUsed.has(m.key)))
+        const toRet = new Map(
+            [...this.pieceRegistry.colors]
+            .filter(([k, v]) => !this.piecesUsed.has(k))
+          );
+        return toRet;
     }
 
     placePiece(piece){
