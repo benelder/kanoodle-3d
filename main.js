@@ -78,18 +78,17 @@ for(let [key, value] of board.pieceRegistry.colors){
 
 // Set up the scene
 const scene = new THREE.Scene();
+
 // Set up the camera
-//var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, -500, 100 );
 camera.position.z = 1;
 camera.position.y= 1;
 camera.position.x = 1;
 
-
 // Set up the renderer
 const renderer = new THREE.WebGLRenderer();
-renderer.setSize(window.innerWidth * 0.70, window.innerHeight * .70);
 const rightPanel = document.querySelector('#right-panel');
+renderer.setSize(window.innerWidth * 0.70, window.innerHeight * .70);
 rightPanel.appendChild(renderer.domElement);
 
 // Set up the controls
@@ -103,9 +102,6 @@ const radius = 2;
 const distancei = 4;
 const distancej = 3.3;
 const distancek = 3.3;
-
-drawBoard();
-
 
 // Add ambient light to the scene
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -455,4 +451,5 @@ function reset(){
     drawBoard();
 }
 
+drawBoard();
 render();
