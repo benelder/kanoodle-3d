@@ -204,14 +204,7 @@ function updateControlPanel(){
                 // actively placing, hide add button
                 btnAdd.style.display = 'none';
                 // show next, prev, remove, set buttons
-                const btnNext = document.getElementById('btnNext' + key);
-                btnNext.style.display = 'inline';
-                const btnPrev = document.getElementById('btnPrev' + key);
-                btnPrev.style.display = 'inline';
-                const btnRemove = document.getElementById('btnRemove' + key);
-                btnRemove.style.display = 'inline';
-                const btnSet = document.getElementById('btnSet' + key);
-                btnSet.style.display = 'inline';
+                showPlacingButtons(key);
             }
         }
         else{
@@ -238,14 +231,8 @@ function updateControlPanel(){
                     btnAdd.disabled = true;
                 }
 
-                const btnNext = document.getElementById('btnNext' + key);
-                btnNext.style.display = 'none';
-                const btnPrev = document.getElementById('btnPrev' + key);
-                btnPrev.style.display = 'none';
-                const btnRemove = document.getElementById('btnRemove' + key);
-                btnRemove.style.display = 'none';
-                const btnSet = document.getElementById('btnSet' + key);
-                btnSet.style.display = 'none';
+                hidePlacingButtons(key);
+
                 const lbl = document.getElementById('lbl' + key);
                 lbl.innerText = key + '(' + board.pieceRegistry.colors.get(key).validPositions.length  + ')';
             }
@@ -253,8 +240,31 @@ function updateControlPanel(){
             // show "Add" button for unused pieces
         }
     }
-
 }
+
+function showPlacingButtons(key){
+    const btnNext = document.getElementById('btnNext' + key);
+    btnNext.style.display = 'inline';
+    const btnPrev = document.getElementById('btnPrev' + key);
+    btnPrev.style.display = 'inline';
+    const btnRemove = document.getElementById('btnRemove' + key);
+    btnRemove.style.display = 'inline';
+    const btnSet = document.getElementById('btnSet' + key);
+    btnSet.style.display = 'inline';
+}
+
+function hidePlacingButtons(key){
+    const btnNext = document.getElementById('btnNext' + key);
+    btnNext.style.display = 'none';
+    const btnPrev = document.getElementById('btnPrev' + key);
+    btnPrev.style.display = 'none';
+    const btnRemove = document.getElementById('btnRemove' + key);
+    btnRemove.style.display = 'none';
+    const btnSet = document.getElementById('btnSet' + key);
+    btnSet.style.display = 'none';
+}
+
+
 
 function clearBoard(){
     for( var i = scene.children.length - 1; i >= 0; i--) { 
@@ -312,7 +322,7 @@ function initiatePlacing(i){
     }
 
     if(positions.length == 0){
-        throw new Error('No valid positions exist for that color');
+        return false;
     }
 
     const lbl = document.getElementById('lbl' + i);
@@ -325,6 +335,8 @@ function initiatePlacing(i){
     placingPiece = i;
 
     drawBoard();
+
+    return true;
 }
 
 function placeNextPosition(i){
@@ -425,12 +437,19 @@ function filterChanged(){
     const usedPiece = board.piecesUsed.get(placingPiece);
     const color = board.pieceRegistry.colors.get(placingPiece);
     // remove placingPiece
-    board.removePiece(usedPiece);
+    if(usedPiece != undefined){
+        board.removePiece(usedPiece);
+    }
     color.vposIndex = 0;
     drawBoard();
 
-    initiatePlacing(i);
+    var positionsExist = initiatePlacing(i);
 
+    if(!positionsExist){
+        hidePlacingButtons(i);
+    }else{
+        showPlacingButtons(i);
+    }
     //update count of validPositions
 }
 
