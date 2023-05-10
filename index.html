@@ -18,22 +18,24 @@
 		}
 		
 		.container {
-			display: flex;
-			flex-wrap: wrap;
+			
 		}
 		
 		.panel {
 			background-color: #fff;
 			border: 1px solid #ddd;
-			padding: 10px;
 		}
 		
 		.left-panel {
-			flex-basis: 25%;
+			position: absolute;
+			width: 25%;
+			height: 100%;
+			padding: 10px;
+
 		}
 		
 		.right-panel {
-			flex-basis: 75%;
+			width: 100%;
 			height: 100vh;
 		}
 
@@ -65,55 +67,59 @@
 </head>
 <body>
   <div class="container">
-		<div class="panel left-panel">
-			<h2>Kanoodle Solver 3D</h2>
-			<p>Pieces</p>
-			<div id="controlPanel">
-				<div class="top-level-controls">
-					<button disabled="true" id="btnSolve">Solve</button>
-					<button id="btnReset">Reset</button>
-				</div>
-			</div>
-			<div id="filters" style="display:none">
-				<label for="ddlX">X:</label>
-
-				<select name="ddlX" id="ddlX">
-					<option value="All">All</option>
-					<option value="0">0</option>
-					<option value="1">1</option>
-					<option value="2">2</option>
-					<option value="3">3</option>
-					<option value="4">4</option>
-					<option value="5">5</option>
-				</select>
-
-				<label for="ddlY">Y:</label>
-
-				<select name="ddlY" id="ddlY">
-					<option value="All">All</option>
-					<option value="0">0</option>
-					<option value="1">1</option>
-					<option value="2">2</option>
-					<option value="3">3</option>
-					<option value="4">4</option>
-					<option value="5">5</option>
-				</select>
-
-				<label for="ddlZ">Z:</label>
-
-				<select name="ddlZ" id="ddlZ">
-					<option value="All">All</option>
-					<option value="0">0</option>
-					<option value="1">1</option>
-					<option value="2">2</option>
-					<option value="3">3</option>
-					<option value="4">4</option>
-					<option value="5">5</option>
-				</select>
+	<div class="panel left-panel">
+		<h2>Kanoodle Solver 3D</h2>
+		<p>Pieces</p>
+		<div id="controlPanel">
+			<div class="top-level-controls">
+				<button disabled="true" id="btnSolve">Solve</button>
+				<button id="btnReset">Reset</button>
 			</div>
 		</div>
+		<div id="filters" style="display:none">
+			<label for="ddlX">X:</label>
+
+			<select name="ddlX" id="ddlX">
+				<option value="All">All</option>
+				<option value="0">0</option>
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+				<option value="4">4</option>
+				<option value="5">5</option>
+			</select>
+
+			<label for="ddlY">Y:</label>
+
+			<select name="ddlY" id="ddlY">
+				<option value="All">All</option>
+				<option value="0">0</option>
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+				<option value="4">4</option>
+				<option value="5">5</option>
+			</select>
+
+			<label for="ddlZ">Z:</label>
+
+			<select name="ddlZ" id="ddlZ">
+				<option value="All">All</option>
+				<option value="0">0</option>
+				<option value="1">1</option>
+				<option value="2">2</option>
+				<option value="3">3</option>
+				<option value="4">4</option>
+				<option value="5">5</option>
+			</select>
+		</div>
+	</div>
 		<div id="right-panel" class="panel right-panel">
-      <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+      
+  		</div>
+		  
+  </div>
+  <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
 
       <script type="importmap">
         {
@@ -127,6 +133,5 @@
 
 	  <script type="module" src="kanoodle.js"></script>
 	  <script type="module" src="main.js"></script>
-  </div>
 </body>
 </html>

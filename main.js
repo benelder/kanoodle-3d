@@ -78,17 +78,19 @@ for(let [key, value] of board.pieceRegistry.colors){
 
 // Set up the scene
 const scene = new THREE.Scene();
+scene.add(new THREE.GridHelper(10, 10));
+const renderer = new THREE.WebGLRenderer();
+const rightPanel = document.querySelector('#right-panel');
+const frustumSize = 1500;
+const aspect = rightPanel.width / rightPanel.height;
 
 // Set up the camera
 const camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, -500, 100 );
-camera.position.z = 1;
-camera.position.y= 1;
-camera.position.x = 1;
+camera.position.set(1, 1, 1);
 
 // Set up the renderer
-const renderer = new THREE.WebGLRenderer();
-const rightPanel = document.querySelector('#right-panel');
-renderer.setSize(window.innerWidth * 0.70, window.innerHeight * .70);
+renderer.setSize(window.innerWidth - 10, window.innerHeight - 10);
+
 rightPanel.appendChild(renderer.domElement);
 
 // Set up the controls
