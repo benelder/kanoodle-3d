@@ -348,6 +348,23 @@ export class Board{
         this.pieceRegistry.reset();
     }
 
+    updateAllValidPositions(){
+        for(let [key, value] of this.pieceRegistry.colors){
+            if(this.piecesUsed.has(key)){
+                continue; // only updating valid positions indexes of pieces that have not been used
+            }
+            else{
+                value.validPositions = [];
+                for (let i = 0; i < value.allPositions.length; i++) {
+                    const piece = value.allPositions[i];
+                    if(!this.collision(piece)){
+                        value.validPositions.push(piece);
+                    }
+                }
+            }
+        }
+    }
+
     solve(){
         const unusedColors = this.getUnusedColors();
     

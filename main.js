@@ -27,7 +27,7 @@ for(let [key, value] of board.pieceRegistry.colors){
     colorContainer.className = 'color-container';
 
     const lbl = document.createElement('label');
-    lbl.classList.add('color-label')
+    lbl.classList.add('color-label');
     lbl.id= 'lbl' + key;
 
     if(board.piecesUsed.has(key)){
@@ -204,8 +204,8 @@ function updateControlPanel(){
                 btnCut.style.display = 'inline';
                 const btnSet = document.getElementById('btnSet' + key);
                 btnSet.style.display = 'none';
-                // const lbl = document.getElementById('lbl' + key);
-                // lbl.innerText = key + ' (placed)';
+                const lbl = document.getElementById('lbl' + key);
+                lbl.innerText = key + ' (---)';
             }else{
                 btnAdd.style.display = 'inline';
 
@@ -270,7 +270,7 @@ function removePiece(char){
     board.removePiece(usedPiece);
     color.vposIndex = 0;
     placingPiece = null;
-    updateAllValidPositions();
+    board.updateAllValidPositions();
     drawBoard();
 }
 
@@ -278,7 +278,7 @@ function setPiece(char){
     const color = board.pieceRegistry.colors.get(char);
     color.vposIndex = 0;
     placingPiece = null;
-    updateAllValidPositions();
+    board.updateAllValidPositions();
     drawBoard();
 }
 
@@ -368,23 +368,6 @@ function placePrevPosition(i){
     }
     board.placePiece(positions[color.vposIndex]);
     drawBoard();
-}
-
-function updateAllValidPositions(){
-    for(let [key, value] of board.pieceRegistry.colors){
-        if(board.piecesUsed.has(key)){
-            continue; // only updating valid positions indexes of pieces that have not been used
-        }
-        else{
-            value.validPositions = [];
-            for (let i = 0; i < value.allPositions.length; i++) {
-                const piece = value.allPositions[i];
-                if(!board.collision(piece)){
-                    value.validPositions.push(piece);
-                }
-            }
-        }
-    }
 }
 
 function filterChanged(){
