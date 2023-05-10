@@ -78,16 +78,14 @@ for(let [key, value] of board.pieceRegistry.colors){
 
 // Set up the scene
 const scene = new THREE.Scene();
-scene.add(new THREE.GridHelper(10, 10));
 const renderer = new THREE.WebGLRenderer();
 const rightPanel = document.querySelector('#right-panel');
 const frustumSize = 1500;
 const aspect = rightPanel.width / rightPanel.height;
 
 // Set up the camera
-const camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, -500, 100 );
+const camera = new THREE.OrthographicCamera( window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, -500, 100 );
 camera.position.set(1, 1, 1);
-
 // Set up the renderer
 renderer.setSize(window.innerWidth - 10, window.innerHeight - 10);
 
@@ -114,10 +112,8 @@ dirLight.position.set(10, 20, 0); // x, y, z
 scene.add(dirLight);
 
 // Create an AxesHelper
-const axesHelper = new THREE.AxesHelper(50);
-
-// Add the AxesHelper to the scene
-scene.add(axesHelper);
+//scene.add(new THREE.GridHelper(80, 20));
+scene.add(new THREE.AxesHelper(50));
 
 function getMaterial(val){
     const s = 100;
