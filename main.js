@@ -27,6 +27,7 @@ for(let [key, value] of board.pieceRegistry.colors){
     colorContainer.className = 'color-container';
 
     const lbl = document.createElement('label');
+    lbl.classList.add('color-label')
     lbl.id= 'lbl' + key;
 
     if(board.piecesUsed.has(key)){
@@ -37,42 +38,25 @@ for(let [key, value] of board.pieceRegistry.colors){
 
     colorContainer.appendChild(lbl);
 
-    const btnAdd = document.createElement('button');
-    btnAdd.innerText = 'Add';
-    btnAdd.id = 'btnAdd' + key;
-    btnAdd.addEventListener('click', ()=> initiatePlacing(key));    
-    colorContainer.appendChild(btnAdd);
-
-    const btnNext = document.createElement('button');
-    btnNext.innerText = 'Next';
-    btnNext.id = 'btnNext' + key;
-    btnNext.style.display = 'none';
-    btnNext.addEventListener('click', ()=> placeNextPosition(key));
-    colorContainer.appendChild(btnNext);
-
-    const btnPrev = document.createElement('button');
-    btnPrev.innerText = 'Prev';
-    btnPrev.id = 'btnPrev' + key;
-    btnPrev.style.display = 'none';
-    btnPrev.addEventListener('click', ()=> placePrevPosition(key));
-    colorContainer.appendChild(btnPrev);
-
-    const btnRemove = document.createElement('button');
-    btnRemove.innerText = 'Remove';
-    btnRemove.id = 'btnRemove' + key;
-    btnRemove.style.display = 'none';
-    btnRemove.addEventListener('click', ()=> removePiece(key));
-    colorContainer.appendChild(btnRemove);
-
-    const btnSet = document.createElement('button');
-    btnSet.innerText = 'Set';
-    btnSet.id = 'btnSet' + key;
-    btnSet.style.display = 'none';
-    btnSet.addEventListener('click', ()=> setPiece(key));
-    colorContainer.appendChild(btnSet);
+    colorContainer.appendChild(createButton('Add', key, 'btn-primary', ()=> initiatePlacing(key)));
+    colorContainer.appendChild(createButton('Prev', key, 'btn-primary', ()=> placePrevPosition(key)));
+    colorContainer.appendChild(createButton('Cut', key, 'btn-danger', ()=> removePiece(key)));
+    colorContainer.appendChild(createButton('Set', key, 'btn-success', ()=> setPiece(key)));
+    colorContainer.appendChild(createButton('Next', key, 'btn-primary', ()=> placeNextPosition(key)));
 
 
     controlPanel.appendChild(colorContainer);
+}
+
+function createButton(name, key, className, clickHandler){
+    const btnAdd = document.createElement('button');
+    btnAdd.innerText = name;
+    btnAdd.id = 'btn' + name + key;
+    btnAdd.classList.add('btn');
+    btnAdd.classList.add(className);
+    btnAdd.classList.add('btn-sm');
+    btnAdd.addEventListener('click', clickHandler);    
+    return btnAdd;
 }
 
 // Set up the scene
@@ -216,12 +200,12 @@ function updateControlPanel(){
                 btnNext.style.display = 'none';
                 const btnPrev = document.getElementById('btnPrev' + key);
                 btnPrev.style.display = 'none';
-                const btnRemove = document.getElementById('btnRemove' + key);
-                btnRemove.style.display = 'inline';
+                const btnCut = document.getElementById('btnCut' + key);
+                btnCut.style.display = 'inline';
                 const btnSet = document.getElementById('btnSet' + key);
                 btnSet.style.display = 'none';
-                const lbl = document.getElementById('lbl' + key);
-                lbl.innerText = key + ' (placed)';
+                // const lbl = document.getElementById('lbl' + key);
+                // lbl.innerText = key + ' (placed)';
             }else{
                 btnAdd.style.display = 'inline';
 
@@ -243,8 +227,8 @@ function showPlacingButtons(key){
     btnNext.style.display = 'inline';
     const btnPrev = document.getElementById('btnPrev' + key);
     btnPrev.style.display = 'inline';
-    const btnRemove = document.getElementById('btnRemove' + key);
-    btnRemove.style.display = 'inline';
+    const btnCut = document.getElementById('btnCut' + key);
+    btnCut.style.display = 'inline';
     const btnSet = document.getElementById('btnSet' + key);
     btnSet.style.display = 'inline';
 }
@@ -254,8 +238,8 @@ function hidePlacingButtons(key){
     btnNext.style.display = 'none';
     const btnPrev = document.getElementById('btnPrev' + key);
     btnPrev.style.display = 'none';
-    const btnRemove = document.getElementById('btnRemove' + key);
-    btnRemove.style.display = 'none';
+    const btnCut = document.getElementById('btnCut' + key);
+    btnCut.style.display = 'none';
     const btnSet = document.getElementById('btnSet' + key);
     btnSet.style.display = 'none';
 }
