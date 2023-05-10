@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import {OrbitControls}  from 'OrbitControls'
 import {Board} from './kanoodle.js'
 
-
 const board = new Board();
 let placingPiece = null;
 
@@ -79,17 +78,15 @@ for(let [key, value] of board.pieceRegistry.colors){
 // Set up the scene
 const scene = new THREE.Scene();
 const renderer = new THREE.WebGLRenderer();
-const rightPanel = document.querySelector('#right-panel');
-const frustumSize = 1500;
-const aspect = rightPanel.width / rightPanel.height;
+const mainPanel = document.querySelector('#main-panel');
 
 // Set up the camera
 const camera = new THREE.OrthographicCamera( window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, -500, 100 );
 camera.position.set(1, 1, 1);
 // Set up the renderer
-renderer.setSize(window.innerWidth - 10, window.innerHeight - 10);
+renderer.setSize(window.innerWidth, window.innerHeight);
 
-rightPanel.appendChild(renderer.domElement);
+mainPanel.appendChild(renderer.domElement);
 
 // Set up the controls
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -182,7 +179,8 @@ function updateControlPanel(){
 
         // reset some controls
         const colorContainer = document.getElementById('colorContainer' + key);
-        colorContainer.style.display = 'block';
+        colorContainer.classList.add('select-mode');
+        colorContainer.classList.remove('place-mode');
         const btnAdd = document.getElementById('btnAdd' + key);
         btnAdd.disabled = false;
         
@@ -196,7 +194,8 @@ function updateControlPanel(){
             if(key !== placingPiece){
                 // disable all controls for pieces we are not actively placing
                 const colorContainer = document.getElementById('colorContainer' + key);
-                colorContainer.style.display = 'none';
+                colorContainer.classList.remove('select-mode');
+                colorContainer.classList.add('place-mode');
             }
             else{
                 // actively placing, hide add button
@@ -235,8 +234,6 @@ function updateControlPanel(){
                 const lbl = document.getElementById('lbl' + key);
                 lbl.innerText = key + '(' + board.pieceRegistry.colors.get(key).validPositions.length  + ')';
             }
-
-            // show "Add" button for unused pieces
         }
     }
 }
@@ -263,8 +260,6 @@ function hidePlacingButtons(key){
     btnSet.style.display = 'none';
 }
 
-
-
 function clearBoard(){
     for( var i = scene.children.length - 1; i >= 0; i--) { 
         let obj = scene.children[i];
@@ -280,9 +275,6 @@ function render() {
     renderer.render(scene, camera);
     controls.update(); // Update the controls
 }
-
-
-
 
 function removePiece(char){
     const usedPiece = board.piecesUsed.get(char);
@@ -411,8 +403,6 @@ function updateAllValidPositions(){
     }
 }
 
-
-
 function filterChanged(){
     const i = placingPiece;
     const usedPiece = board.piecesUsed.get(placingPiece);
@@ -431,7 +421,6 @@ function filterChanged(){
     }else{
         showPlacingButtons(i);
     }
-    //update count of validPositions
 }
 
 function attemptSolve(){
