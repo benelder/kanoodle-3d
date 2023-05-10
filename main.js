@@ -98,32 +98,35 @@ scene.add(new THREE.AxesHelper(50));
 
 function getMaterial(val){
     const s = 100;
-    if(val == "A")
-        return new THREE.MeshPhongMaterial({ color: 0x7bc149, shininess: s });
-    if(val == "B")
-        return new THREE.MeshPhongMaterial({ color: 0xdbd11a, shininess: s });
-    if(val == "C")
-        return new THREE.MeshPhongMaterial({ color: 0x301adb, shininess: s });
-    if(val == "D")
-        return new THREE.MeshPhongMaterial({ color: 0x1acbdb, shininess: s });
-    if(val == "E")
-        return new THREE.MeshPhongMaterial({ color: 0xd60a18, shininess: s });
-    if(val == "F")
-        return new THREE.MeshPhongMaterial({ color: 0xd60a7a, shininess: s });
-    if(val == "G")
-        return new THREE.MeshPhongMaterial({ color: 0x074c06, shininess: s });
-    if(val == "H")
-        return new THREE.MeshPhongMaterial({ color: 0xededed, shininess: s });
-    if(val == "I")
-        return new THREE.MeshPhongMaterial({ color: 0xe25300, shininess: s });
-    if(val == "J")
-        return new THREE.MeshPhongMaterial({ color: 0xeda1b8, shininess: s });
-    if(val == "K")
-        return new THREE.MeshPhongMaterial({ color: 0x9b9b9b, shininess: s });
-    if(val == "L")
-        return new THREE.MeshPhongMaterial({ color: 0x7c26ff, shininess: s });
 
-    return new THREE.MeshPhongMaterial({ color: 0xDDDDDD });
+    switch (val) {
+        case 'A': 
+            return new THREE.MeshPhongMaterial({ color: 0x7bc149, shininess: s });
+        case 'B':
+            return new THREE.MeshPhongMaterial({ color: 0xdbd11a, shininess: s });   
+        case 'C':
+            return new THREE.MeshPhongMaterial({ color: 0x301adb, shininess: s });
+        case 'D': 
+            return new THREE.MeshPhongMaterial({ color: 0x1acbdb, shininess: s });
+        case 'E':
+            return new THREE.MeshPhongMaterial({ color: 0xd60a18, shininess: s });
+        case 'F':
+            return new THREE.MeshPhongMaterial({ color: 0xd60a7a, shininess: s });
+        case 'G':
+            return new THREE.MeshPhongMaterial({ color: 0x074c06, shininess: s });
+        case 'H':
+            return new THREE.MeshPhongMaterial({ color: 0xededed, shininess: s });
+        case 'I':
+            return new THREE.MeshPhongMaterial({ color: 0xe25300, shininess: s });
+        case 'J':
+            return new THREE.MeshPhongMaterial({ color: 0xeda1b8, shininess: s });
+        case 'K':
+            return new THREE.MeshPhongMaterial({ color: 0x9b9b9b, shininess: s });
+        case 'L':
+            return new THREE.MeshPhongMaterial({ color: 0x7c26ff, shininess: s });
+        default:
+            return new THREE.MeshPhongMaterial({ color: 0xDDDDDD });
+    }
 }
 
 function drawBoard(){
