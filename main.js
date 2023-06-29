@@ -161,6 +161,9 @@ function updateControlPanel(){
     const filters = document.getElementById('filters');
     filters.style.display = 'none';
 
+    const lblNoSolution = document.getElementById('lblNoSolution');
+    lblNoSolution.style.display = 'none';
+
     
     for(let [key, value] of board.pieceRegistry.colors){
 
@@ -397,10 +400,11 @@ function attemptSolve(){
     const success = board.solve();
     if(success){
         console.log("Successfully solved");
+        drawBoard();
     } else{
-        console.log("Unsuccessful solve attempt - there are no valid solutions");
+        const lbl = document.getElementById('lblNoSolution');
+        lbl.style.display = 'inline';
     }
-    drawBoard();
 }
 
 function reset(){
