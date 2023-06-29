@@ -380,9 +380,9 @@ function placePrevPosition(i){
 
 function updatePieceDetailsPanel(position){
     const lblPieceName = document.getElementById('lblPieceName');
-    lblPieceName.innerText = "Name: " + position.name;
-    const lblPieceChar = document.getElementById('lblPieceChar');
-    lblPieceChar.innerText = "Char: " + position.character;
+    lblPieceName.innerText = "Name: " + position.name + '(' + position.character + ")";
+    const lblRootPosition = document.getElementById('lblRootPosition');
+    lblRootPosition.innerText = "Root: [" + position.rootPosition.x + ", " + position.rootPosition.y + ", " + position.rootPosition.z + "]";
     const lblRotation = document.getElementById('lblRotation');
     lblRotation.innerText = "Rotation: " + position.rotation;
     const lblLean = document.getElementById('lblLean');
