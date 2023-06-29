@@ -315,7 +315,7 @@ function initiatePlacing(i){
     color.vposIndex = 0;
 
     board.placePiece(positions[color.vposIndex]);
-
+    updatePieceDetailsPanel(positions[color.vposIndex]);
     placingPiece = i;
 
     drawBoard();
@@ -347,6 +347,7 @@ function placeNextPosition(i){
     }
 
     board.placePiece(positions[color.vposIndex]);
+    updatePieceDetailsPanel(positions[color.vposIndex]);
     drawBoard();
 }
 
@@ -373,7 +374,23 @@ function placePrevPosition(i){
         color.vposIndex = positions.length - 1;
     }
     board.placePiece(positions[color.vposIndex]);
+    updatePieceDetailsPanel(positions[color.vposIndex]);
     drawBoard();
+}
+
+function updatePieceDetailsPanel(position){
+    const lblPieceName = document.getElementById('lblPieceName');
+    lblPieceName.innerText = "Name: " + position.name;
+    const lblPieceChar = document.getElementById('lblPieceChar');
+    lblPieceChar.innerText = "Char: " + position.character;
+    const lblRotation = document.getElementById('lblRotation');
+    lblRotation.innerText = "Rotation: " + position.rotation;
+    const lblLean = document.getElementById('lblLean');
+    lblLean.innerText = "Lean: " + position.lean;
+    const lblTranspose = document.getElementById('lblTranspose');
+    lblTranspose.innerText = "Transpose Plane: " + position.plane;
+    const lblMirror = document.getElementById('lblMirror');
+    lblMirror.innerText = "Mirror X: " + position.mirrorX;
 }
 
 function filterChanged(){

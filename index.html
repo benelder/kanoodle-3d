@@ -89,6 +89,12 @@
         margin-bottom: 4px;
       }
 
+      .detail-label{
+        display: block; 
+        font-size: .85em;
+        font-family: 'Courier New', Courier, monospace;
+      }
+
       canvas {
         width: 100%;
         height: 100%;
@@ -108,41 +114,50 @@
         <button id="btnReset"  class="btn btn-secondary btn-lg" style="float:right">Reset</button>
       </div>
       <div id="filters" style="display:none">
-        <label for="ddlX">X:</label>
+        <div style="float:right; margin-right:5px; padding: 4px; border: solid 1px #aaaaaa; background-color: #efefef;">
+          <label id="lblPieceName" class="detail-label"></label>
+          <label id="lblPieceChar" class="detail-label"></label>
+          <label id="lblRootPosition" class="detail-label"></label>
+          <label id="lblRotation" class="detail-label"></label>
+          <label id="lblLean" class="detail-label"></label>
+          <label id="lblTranspose" class="detail-label"></label>
+          <label id="lblMirror" class="detail-label"></label>
+        </div>
+          <label for="ddlX">X:</label>
 
-        <select name="ddlX" id="ddlX">
-          <option value="All">All</option>
-          <option value="0">0</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-        </select>
+          <select name="ddlX" id="ddlX">
+            <option value="All">All</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
 
-        <label for="ddlY">Y:</label>
+          <label for="ddlY">Y:</label>
 
-        <select name="ddlY" id="ddlY">
-          <option value="All">All</option>
-          <option value="0">0</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-        </select>
+          <select name="ddlY" id="ddlY">
+            <option value="All">All</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
 
-        <label for="ddlZ">Z:</label>
+          <label for="ddlZ">Z:</label>
 
-        <select name="ddlZ" id="ddlZ">
-          <option value="All">All</option>
-          <option value="0">0</option>
-          <option value="1">1</option>
-          <option value="2">2</option>
-          <option value="3">3</option>
-          <option value="4">4</option>
-          <option value="5">5</option>
-        </select>
+          <select name="ddlZ" id="ddlZ">
+            <option value="All">All</option>
+            <option value="0">0</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4">4</option>
+            <option value="5">5</option>
+          </select>
       </div>
     </div>
     <div id="main-panel" >
