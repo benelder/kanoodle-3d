@@ -112,15 +112,16 @@ export class Piece {
         const t = this.absolutePosition;
         const p = piece.absolutePosition;
 
-        for (let i = 0; i < t.length; i++) {
-            let nodeMatch = false;
-            for (let j = 0; j < p.length; j++) {
-                if (t[i].offset.x === p[j].offset.x && t[i].offset.y === p[j].offset.y && t[i].offset.z === p[j].offset.z) {
-                    nodeMatch = true;
-                    break;
-                }
-            }
-            if (!nodeMatch) {
+        // Use Set-based comparison for O(n) instead of O(n²)
+        const thisPositions = new Set(t.map(node => `${node.offset.x},${node.offset.y},${node.offset.z}`));
+        const otherPositions = new Set(p.map(node => `${node.offset.x},${node.offset.y},${node.offset.z}`));
+
+        if (thisPositions.size !== otherPositions.size) {
+            return false;
+        }
+
+        for (let pos of thisPositions) {
+            if (!otherPositions.has(pos)) {
                 return false;
             }
         }
