@@ -368,7 +368,9 @@ export class Board {
             return true;
         }
 
-        const pieces = unusedColors.values().next().value.validPositions;
+        const pieces = Array.from(unusedColors.values())
+            .reduce((min, val) => val.validPositions.length < min.validPositions.length ? val : min)
+            .validPositions;
 
         if (pieces.length == 0) {
             return false;
