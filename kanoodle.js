@@ -1,3 +1,9 @@
+// Helper function to convert board position to bit index
+// Board has 56 valid positions where x+y+z <= 5
+// We map them to bits 0-55 in a BigInt
+function positionToBit(x, y, z) {
+    return BigInt(x * 36 + y * 6 + z);
+}
 
 export class Location {
     constructor(x, y, z) {
@@ -25,6 +31,7 @@ export class Piece {
     mirrorX;
     lean;
     absolutePosition;
+    bitmask;
 
     #applyLean(offset) {
         if (this.lean === true) {
@@ -70,6 +77,7 @@ export class Piece {
 
     getAbsolutePosition() {
         var toRet = [];
+        var mask = 0n;
 
         for (let i = 0; i < this.nodes.length; i++) {
             let start = (this.mirrorX ? this.#applyMirrorX(this.nodes[i].offset) : this.nodes[i].offset);
@@ -80,8 +88,13 @@ export class Piece {
                 this.rootPosition.z + lean.z);
             var transpose = this.#transposeToPlane(origin);
             toRet.push(new Atom(transpose.x, transpose.y, transpose.z));
+
+            // Calculate bitmask for this position
+            const bit = positionToBit(transpose.x, transpose.y, transpose.z);
+            mask |= (1n << bit);
         }
 
+        this.bitmask = mask;
         return toRet;
     }
 
@@ -257,6 +270,7 @@ export class Board {
     usedLocations = new Map();
     piecesUsed = new Map();
     pieceRegistry = new PieceRegistry();
+    occupancyMask = 0n;
 
     constructor() {
         this.#initializeBoard();
@@ -281,6 +295,7 @@ export class Board {
 
         this.piecesUsed = new Map();
         this.usedLocations = new Map();
+        this.occupancyMask = 0n;
     }
 
     getUnusedColors() {
@@ -305,6 +320,7 @@ export class Board {
                 this.usedLocations.set(key, loc);
             }
             this.piecesUsed.set(piece.character, piece);
+            this.occupancyMask |= piece.bitmask;
         } catch (error) {
             this.removePiece(piece);
             throw new Error('Error placing piece');
@@ -321,23 +337,12 @@ export class Board {
             this.usedLocations.delete(key);
         }
         this.piecesUsed.delete(piece.character);
+        this.occupancyMask &= ~piece.bitmask;
     }
 
     collision(piece) {
-        const abs = piece.absolutePosition;
-        let toRet = false;
-
-        for (let i = 0; i < abs.length; i++) {
-            const loc = abs[i].offset;
-            const key = loc.x * 36 + loc.y * 6 + loc.z;
-            const mapNode = this.boardMap.get(key);
-            if (mapNode.value != '-') {
-                toRet = true;
-                break;
-            }
-        }
-
-        return toRet;
+        // Optimized: single bitwise AND operation instead of looping
+        return (piece.bitmask & this.occupancyMask) !== 0n;
     }
 
     resetBoard() {
