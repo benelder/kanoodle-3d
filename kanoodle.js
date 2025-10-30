@@ -248,6 +248,9 @@ export class Board {
         }
         this.piecesUsed.set(piece.character, piece);
         this.occupancyMask |= piece.bitmask;
+
+        // Automatic constraint propagation - update valid positions for remaining pieces
+        this.updateAllValidPositions();
     }
 
     removePiece(piece) {
@@ -260,6 +263,9 @@ export class Board {
         }
         this.piecesUsed.delete(piece.character);
         this.occupancyMask &= ~piece.bitmask;
+
+        // Automatic constraint propagation - update valid positions for remaining pieces
+        this.updateAllValidPositions();
     }
 
     collision(piece) {
@@ -306,14 +312,13 @@ export class Board {
 
         for (let i = 0; i < pieces.length; i++) {
             const pos = pieces[i];
-            if (!this.collision(pos)) {
-                this.placePiece(pos);
-                const s = this.solve();
-                if (s == true) {
-                    return true;
-                }
-                this.removePiece(pos);
+            // No collision check needed - validPositions is kept accurate via constraint propagation
+            this.placePiece(pos);
+            const s = this.solve();
+            if (s == true) {
+                return true;
             }
+            this.removePiece(pos);
         }
 
         return false;
