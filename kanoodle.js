@@ -180,7 +180,18 @@ export class PieceRegistry {
                                                 cells.push(loc.x * 36 + loc.y * 6 + loc.z);
                                             }
 
-                                            toRet.push({ bitmask: piece.bitmask, cells: cells, character: piece.character });
+                                            toRet.push({
+                                                bitmask: piece.bitmask,
+                                                cells: cells,
+                                                character: piece.character,
+                                                // Preserve fields expected by benchmark/config tooling
+                                                rootPosition: piece.rootPosition,
+                                                rotation: piece.rotation,
+                                                plane: piece.plane,
+                                                lean: piece.lean,
+                                                mirrorX: piece.mirrorX,
+                                                absolutePosition: abs
+                                            });
                                         }
                                     }
                                 }
@@ -249,6 +260,9 @@ export class Board {
         for (let i = 0; i < cells.length; i++) {
             const key = cells[i];
             const mapNode = this.boardMap.get(key);
+            if (!mapNode) {
+                throw new Error(`Invalid board position key ${key} for piece ${piece.character}`);
+            }
             mapNode.value = piece.character;
         }
         this.piecesUsed.set(piece.character, piece);
@@ -263,6 +277,9 @@ export class Board {
         for (let i = 0; i < cells.length; i++) {
             const key = cells[i];
             const mapNode = this.boardMap.get(key);
+            if (!mapNode) {
+                throw new Error(`Invalid board position key ${key} during remove for piece ${piece.character}`);
+            }
             mapNode.value = '-';
         }
         this.piecesUsed.delete(piece.character);
