@@ -234,23 +234,20 @@ export class Board {
     }
 
     placePiece(piece) {
-        try {
-            const abs = piece.absolutePosition;
-            for (let i = 0; i < abs.length; i++) {
-                const loc = abs[i].offset;
-                const key = loc.x * 36 + loc.y * 6 + loc.z;
-                const mapNode = this.boardMap.get(key);
-                if (mapNode.value != '-') {
-                    throw new Error("Attempt to add piece in used location");
-                }
-                mapNode.value = piece.character;
-            }
-            this.piecesUsed.set(piece.character, piece);
-            this.occupancyMask |= piece.bitmask;
-        } catch (error) {
-            this.removePiece(piece);
-            throw new Error('Error placing piece');
+        // Single collision check at the start using bitmask
+        if (this.collision(piece)) {
+            throw new Error("Attempt to add piece in used location");
         }
+
+        const abs = piece.absolutePosition;
+        for (let i = 0; i < abs.length; i++) {
+            const loc = abs[i].offset;
+            const key = loc.x * 36 + loc.y * 6 + loc.z;
+            const mapNode = this.boardMap.get(key);
+            mapNode.value = piece.character;
+        }
+        this.piecesUsed.set(piece.character, piece);
+        this.occupancyMask |= piece.bitmask;
     }
 
     removePiece(piece) {
