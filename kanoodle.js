@@ -144,6 +144,53 @@ export class PieceRegistry {
         const toRet = [];
         const seenMasks = new Set(); // Track bitmasks we've already seen - O(1) lookup
 
+        // Build base piece once to access node offsets and character
+        const basePiece = constr();
+        const baseNodes = basePiece.nodes.map(n => n.offset);
+
+        // Helpers that mirror Piece's private transforms
+        function applyMirrorX(offset, mirrorX) {
+            return mirrorX ? new Location(offset.x + offset.y, -offset.y, offset.z) : offset;
+        }
+
+        function applyLean(offset, lean) {
+            return lean ? new Location(offset.x, 0, offset.y) : offset;
+        }
+
+        function rotateOffset(location, rotation) {
+            if (rotation === 0) return location;
+            let r = new Location(location.x, location.y, location.z);
+            for (let i = 0; i < rotation; i++) {
+                r = new Location(-r.y, r.x + r.y, r.z);
+            }
+            return r;
+        }
+
+        function transposeToPlane(plane, origin) {
+            if (plane === 0) return origin;
+            if (plane === 1) return new Location(5 - (origin.x + origin.y + origin.z), origin.x, origin.z);
+            if (plane === 2) return new Location(origin.y, 5 - (origin.x + origin.y + origin.z), origin.z);
+            throw new Error('Plane must be between 0 and 2');
+        }
+
+        // Precompute orientation-relative offsets (pre-transpose)
+        const orientationCache = [];
+        for (let r = 0; r < 6; r++) {
+            for (let lean of [false, true]) {
+                for (let mirrorX of [false, true]) {
+                    const preOffsets = [];
+                    for (let i = 0; i < baseNodes.length; i++) {
+                        const start = applyMirrorX(baseNodes[i], mirrorX);
+                        const rot = rotateOffset(start, r);
+                        const leaned = applyLean(rot, lean);
+                        preOffsets.push(leaned);
+                    }
+                    orientationCache.push({ rotation: r, lean: lean, mirrorX: mirrorX, preOffsets });
+                }
+            }
+        }
+
+        // Enumerate roots and planes; translate precomputed offsets and then transpose
         for (let z = 0; z < 6; z++) // for each root position
         {
             for (let y = 0; y < 6; y++) // for each root position
@@ -153,48 +200,48 @@ export class PieceRegistry {
                     if (x + y + z > 5) // will be out of bounds
                         continue;
 
-                    for (let r = 0; r < 6; r++) // for each rotated position
+                    for (let p = 0; p < 3; p++) // for each plane
                     {
-                        for (let p = 0; p < 3; p++) // for each plane
-                        {
-                            // Try all 4 combinations (lean x mirrorX)
-                            for (let lean of [false, true]) {
-                                for (let mirrorX of [false, true]) {
-                                    let piece = constr();
-                                    piece.rootPosition = new Location(x, y, z);
-                                    piece.plane = p;
-                                    piece.rotation = r;
-                                    piece.lean = lean;
-                                    piece.mirrorX = mirrorX;
-                                    piece.absolutePosition = piece.getAbsolutePosition();
+                        for (let oc = 0; oc < orientationCache.length; oc++) {
+                            const { rotation, lean, mirrorX, preOffsets } = orientationCache[oc];
 
-                                    if (piece.isOutOfBounds() === false) {
-                                        if (!seenMasks.has(piece.bitmask)) {
-                                            seenMasks.add(piece.bitmask);
+                            // Build absolutePosition and bitmask
+                            const abs = [];
+                            let mask = 0n;
+                            for (let i = 0; i < preOffsets.length; i++) {
+                                const origin = new Location(x + preOffsets[i].x, y + preOffsets[i].y, z + preOffsets[i].z);
+                                const t = transposeToPlane(p, origin);
+                                abs.push(new Atom(t.x, t.y, t.z));
+                                const bit = positionToBit(t.x, t.y, t.z);
+                                mask |= (1n << bit);
+                            }
 
-                                            // Build compact orientation record
-                                            const cells = [];
-                                            const abs = piece.absolutePosition;
-                                            for (let ci = 0; ci < abs.length; ci++) {
-                                                const loc = abs[ci].offset;
-                                                cells.push(loc.x * 36 + loc.y * 6 + loc.z);
-                                            }
+                            // Bounds check via mask vs validBoardMask
+                            if ((mask & ~validBoardMask) !== 0n) {
+                                continue;
+                            }
 
-                                            toRet.push({
-                                                bitmask: piece.bitmask,
-                                                cells: cells,
-                                                character: piece.character,
-                                                // Preserve fields expected by benchmark/config tooling
-                                                rootPosition: piece.rootPosition,
-                                                rotation: piece.rotation,
-                                                plane: piece.plane,
-                                                lean: piece.lean,
-                                                mirrorX: piece.mirrorX,
-                                                absolutePosition: abs
-                                            });
-                                        }
-                                    }
+                            if (!seenMasks.has(mask)) {
+                                seenMasks.add(mask);
+
+                                const cells = [];
+                                for (let ci = 0; ci < abs.length; ci++) {
+                                    const loc = abs[ci].offset;
+                                    cells.push(loc.x * 36 + loc.y * 6 + loc.z);
                                 }
+
+                                toRet.push({
+                                    bitmask: mask,
+                                    cells: cells,
+                                    character: basePiece.character,
+                                    // Preserve fields expected by benchmark/config tooling
+                                    rootPosition: new Location(x, y, z),
+                                    rotation: rotation,
+                                    plane: p,
+                                    lean: lean,
+                                    mirrorX: mirrorX,
+                                    absolutePosition: abs
+                                });
                             }
                         }
                     }
