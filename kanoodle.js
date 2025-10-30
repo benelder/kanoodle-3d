@@ -166,9 +166,10 @@ export class PieceRegistry {
 
     #loadPossiblePositions() {
         for (let [key, value] of pieceHelper) {
+            const positions = this.#loadPositionsForColor(value.ctor);
             this.colors.set(key, {
-                allPositions: this.#loadPositionsForColor(value.ctor),
-                validPositions: this.#loadPositionsForColor(value.ctor),
+                allPositions: positions,
+                validPositions: positions,
                 vposIndex: 0
             })
         }
@@ -176,6 +177,7 @@ export class PieceRegistry {
 
     #loadPositionsForColor(constr) {
         const toRet = [];
+        const seenMasks = new Set(); // Track bitmasks we've already seen - O(1) lookup
 
         for (let z = 0; z < 6; z++) // for each root position
         {
@@ -190,61 +192,26 @@ export class PieceRegistry {
                     {
                         for (let p = 0; p < 3; p++) // for each plane
                         {
-                            let piece = constr();
-                            piece.rootPosition = new Location(x, y, z);
-                            piece.plane = p;
-                            piece.rotation = r;
-                            piece.lean = false;
-                            piece.mirrorX = false;
-                            piece.absolutePosition = piece.getAbsolutePosition();
+                            // Try all 4 combinations (lean x mirrorX)
+                            for (let lean of [false, true]) {
+                                for (let mirrorX of [false, true]) {
+                                    let piece = constr();
+                                    piece.rootPosition = new Location(x, y, z);
+                                    piece.plane = p;
+                                    piece.rotation = r;
+                                    piece.lean = lean;
+                                    piece.mirrorX = mirrorX;
+                                    piece.absolutePosition = piece.getAbsolutePosition();
 
-                            if (piece.isOutOfBounds() === false) {
-                                if (toRet.some(m => m.isInSamePositionAs(piece)) === false) {
-                                    toRet.push(piece);
-                                }
-                            }
+                                    if (piece.isOutOfBounds() === false) {
+                                        // Convert bitmask to string for Set compatibility
+                                        const maskKey = piece.bitmask.toString();
 
-                            piece = constr();
-                            piece.rootPosition = new Location(x, y, z);
-                            piece.plane = p;
-                            piece.rotation = r;
-                            piece.lean = true;
-                            piece.mirrorX = false;
-                            piece.absolutePosition = piece.getAbsolutePosition();
-
-                            if (piece.isOutOfBounds() === false) {
-                                if (toRet.some(m => m.isInSamePositionAs(piece)) === false) {
-                                    toRet.push(piece);
-                                }
-                            }
-
-
-                            // flip x
-                            piece = constr();
-                            piece.rootPosition = new Location(x, y, z);
-                            piece.plane = p;
-                            piece.rotation = r;
-                            piece.lean = false;
-                            piece.mirrorX = true;
-                            piece.absolutePosition = piece.getAbsolutePosition();
-
-                            if (piece.isOutOfBounds() === false) {
-                                if (toRet.some(m => m.isInSamePositionAs(piece)) === false) {
-                                    toRet.push(piece);
-                                }
-                            }
-
-                            piece = constr();
-                            piece.rootPosition = new Location(x, y, z);
-                            piece.plane = p;
-                            piece.rotation = r;
-                            piece.lean = true;
-                            piece.mirrorX = true;
-                            piece.absolutePosition = piece.getAbsolutePosition();
-
-                            if (piece.isOutOfBounds() === false) {
-                                if (toRet.some(m => m.isInSamePositionAs(piece)) === false) {
-                                    toRet.push(piece);
+                                        if (!seenMasks.has(maskKey)) {
+                                            seenMasks.add(maskKey);
+                                            toRet.push(piece);
+                                        }
+                                    }
                                 }
                             }
                         }
