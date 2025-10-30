@@ -205,19 +205,24 @@ export class PieceRegistry {
                         for (let oc = 0; oc < orientationCache.length; oc++) {
                             const { rotation, lean, mirrorX, preOffsets } = orientationCache[oc];
 
-                            // Build absolutePosition and bitmask
+                            // Build absolutePosition and bitmask with explicit bounds checks
                             const abs = [];
                             let mask = 0n;
+                            let invalid = false;
                             for (let i = 0; i < preOffsets.length; i++) {
                                 const origin = new Location(x + preOffsets[i].x, y + preOffsets[i].y, z + preOffsets[i].z);
                                 const t = transposeToPlane(p, origin);
+                                // Explicit coordinate validation to avoid negative or out-of-pyramid cells
+                                if (t.x < 0 || t.y < 0 || t.z < 0 || (t.x + t.y + t.z) > 5) {
+                                    invalid = true;
+                                    break;
+                                }
                                 abs.push(new Atom(t.x, t.y, t.z));
                                 const bit = positionToBit(t.x, t.y, t.z);
                                 mask |= (1n << bit);
                             }
 
-                            // Bounds check via mask vs validBoardMask
-                            if ((mask & ~validBoardMask) !== 0n) {
+                            if (invalid) {
                                 continue;
                             }
 
