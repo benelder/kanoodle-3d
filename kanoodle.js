@@ -107,8 +107,15 @@ export class Piece {
             toRet.push(new Atom(transpose.x, transpose.y, transpose.z));
 
             // Calculate bitmask for this position
-            const bit = positionToBit(transpose.x, transpose.y, transpose.z);
-            mask |= (1n << bit);
+            // Check for invalid coordinates (negative or out of pyramid bounds)
+            if (transpose.x < 0 || transpose.y < 0 || transpose.z < 0 ||
+                transpose.x + transpose.y + transpose.z > 5) {
+                // Mark as invalid by setting a bit that's definitely not in validBoardMask
+                mask |= (1n << 255n);  // Use a high bit as "invalid" marker
+            } else {
+                const bit = positionToBit(transpose.x, transpose.y, transpose.z);
+                mask |= (1n << bit);
+            }
         }
 
         this.bitmask = mask;

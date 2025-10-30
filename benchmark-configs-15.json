@@ -1,0 +1,626 @@
+{
+  "description": "Benchmark configurations for kanoodle-3d solve() performance testing",
+  "testCount": 15,
+  "requirements": {
+    "piecesPerTest": 3,
+    "minAtomsAtZ0": 2,
+    "noCollisions": true
+  },
+  "configurations": [
+    {
+      "id": 1,
+      "pieces": [
+        {
+          "character": "D",
+          "rootPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 1,
+          "plane": 0,
+          "lean": false,
+          "mirrorX": true
+        },
+        {
+          "character": "F",
+          "rootPosition": {
+            "x": 4,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 2,
+          "plane": 0,
+          "lean": false,
+          "mirrorX": true
+        },
+        {
+          "character": "L",
+          "rootPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 2
+          },
+          "rotation": 4,
+          "plane": 1,
+          "lean": true,
+          "mirrorX": false
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "pieces": [
+        {
+          "character": "F",
+          "rootPosition": {
+            "x": 1,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 1,
+          "plane": 1,
+          "lean": false,
+          "mirrorX": true
+        },
+        {
+          "character": "I",
+          "rootPosition": {
+            "x": 2,
+            "y": 0,
+            "z": 1
+          },
+          "rotation": 4,
+          "plane": 2,
+          "lean": true,
+          "mirrorX": true
+        },
+        {
+          "character": "D",
+          "rootPosition": {
+            "x": 0,
+            "y": 1,
+            "z": 0
+          },
+          "rotation": 1,
+          "plane": 2,
+          "lean": true,
+          "mirrorX": true
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "pieces": [
+        {
+          "character": "A",
+          "rootPosition": {
+            "x": 1,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 0,
+          "plane": 2,
+          "lean": false,
+          "mirrorX": false
+        },
+        {
+          "character": "J",
+          "rootPosition": {
+            "x": 1,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 1,
+          "plane": 1,
+          "lean": false,
+          "mirrorX": false
+        },
+        {
+          "character": "G",
+          "rootPosition": {
+            "x": 3,
+            "y": 1,
+            "z": 0
+          },
+          "rotation": 2,
+          "plane": 1,
+          "lean": true,
+          "mirrorX": false
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "pieces": [
+        {
+          "character": "H",
+          "rootPosition": {
+            "x": 3,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 0,
+          "plane": 1,
+          "lean": true,
+          "mirrorX": false
+        },
+        {
+          "character": "C",
+          "rootPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 0,
+          "plane": 0,
+          "lean": true,
+          "mirrorX": false
+        },
+        {
+          "character": "L",
+          "rootPosition": {
+            "x": 0,
+            "y": 3,
+            "z": 2
+          },
+          "rotation": 5,
+          "plane": 1,
+          "lean": true,
+          "mirrorX": true
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "pieces": [
+        {
+          "character": "J",
+          "rootPosition": {
+            "x": 2,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 1,
+          "plane": 0,
+          "lean": false,
+          "mirrorX": false
+        },
+        {
+          "character": "B",
+          "rootPosition": {
+            "x": 1,
+            "y": 0,
+            "z": 2
+          },
+          "rotation": 5,
+          "plane": 1,
+          "lean": true,
+          "mirrorX": false
+        },
+        {
+          "character": "L",
+          "rootPosition": {
+            "x": 3,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 1,
+          "plane": 0,
+          "lean": false,
+          "mirrorX": false
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "pieces": [
+        {
+          "character": "G",
+          "rootPosition": {
+            "x": 2,
+            "y": 1,
+            "z": 0
+          },
+          "rotation": 2,
+          "plane": 0,
+          "lean": false,
+          "mirrorX": true
+        },
+        {
+          "character": "F",
+          "rootPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 0,
+          "plane": 0,
+          "lean": true,
+          "mirrorX": false
+        },
+        {
+          "character": "L",
+          "rootPosition": {
+            "x": 4,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 3,
+          "plane": 1,
+          "lean": true,
+          "mirrorX": true
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "pieces": [
+        {
+          "character": "L",
+          "rootPosition": {
+            "x": 1,
+            "y": 1,
+            "z": 2
+          },
+          "rotation": 5,
+          "plane": 2,
+          "lean": true,
+          "mirrorX": true
+        },
+        {
+          "character": "D",
+          "rootPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 0,
+          "plane": 0,
+          "lean": false,
+          "mirrorX": false
+        },
+        {
+          "character": "I",
+          "rootPosition": {
+            "x": 0,
+            "y": 1,
+            "z": 1
+          },
+          "rotation": 5,
+          "plane": 1,
+          "lean": true,
+          "mirrorX": false
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "pieces": [
+        {
+          "character": "I",
+          "rootPosition": {
+            "x": 0,
+            "y": 1,
+            "z": 0
+          },
+          "rotation": 0,
+          "plane": 2,
+          "lean": true,
+          "mirrorX": false
+        },
+        {
+          "character": "A",
+          "rootPosition": {
+            "x": 1,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 1,
+          "plane": 0,
+          "lean": false,
+          "mirrorX": true
+        },
+        {
+          "character": "F",
+          "rootPosition": {
+            "x": 1,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 0,
+          "plane": 2,
+          "lean": true,
+          "mirrorX": false
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "pieces": [
+        {
+          "character": "K",
+          "rootPosition": {
+            "x": 0,
+            "y": 3,
+            "z": 0
+          },
+          "rotation": 0,
+          "plane": 2,
+          "lean": true,
+          "mirrorX": false
+        },
+        {
+          "character": "B",
+          "rootPosition": {
+            "x": 1,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 0,
+          "plane": 2,
+          "lean": true,
+          "mirrorX": false
+        },
+        {
+          "character": "D",
+          "rootPosition": {
+            "x": 1,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 0,
+          "plane": 0,
+          "lean": false,
+          "mirrorX": false
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "pieces": [
+        {
+          "character": "H",
+          "rootPosition": {
+            "x": 4,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 2,
+          "plane": 2,
+          "lean": false,
+          "mirrorX": false
+        },
+        {
+          "character": "E",
+          "rootPosition": {
+            "x": 2,
+            "y": 3,
+            "z": 0
+          },
+          "rotation": 2,
+          "plane": 2,
+          "lean": true,
+          "mirrorX": false
+        },
+        {
+          "character": "L",
+          "rootPosition": {
+            "x": 0,
+            "y": 1,
+            "z": 2
+          },
+          "rotation": 4,
+          "plane": 2,
+          "lean": true,
+          "mirrorX": false
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "pieces": [
+        {
+          "character": "B",
+          "rootPosition": {
+            "x": 2,
+            "y": 0,
+            "z": 2
+          },
+          "rotation": 5,
+          "plane": 2,
+          "lean": true,
+          "mirrorX": false
+        },
+        {
+          "character": "C",
+          "rootPosition": {
+            "x": 3,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 2,
+          "plane": 2,
+          "lean": false,
+          "mirrorX": true
+        },
+        {
+          "character": "F",
+          "rootPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 1,
+          "plane": 2,
+          "lean": false,
+          "mirrorX": true
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "pieces": [
+        {
+          "character": "I",
+          "rootPosition": {
+            "x": 1,
+            "y": 1,
+            "z": 0
+          },
+          "rotation": 0,
+          "plane": 0,
+          "lean": true,
+          "mirrorX": false
+        },
+        {
+          "character": "G",
+          "rootPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 1
+          },
+          "rotation": 0,
+          "plane": 0,
+          "lean": true,
+          "mirrorX": true
+        },
+        {
+          "character": "K",
+          "rootPosition": {
+            "x": 2,
+            "y": 1,
+            "z": 0
+          },
+          "rotation": 2,
+          "plane": 2,
+          "lean": true,
+          "mirrorX": false
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "pieces": [
+        {
+          "character": "J",
+          "rootPosition": {
+            "x": 1,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 1,
+          "plane": 0,
+          "lean": false,
+          "mirrorX": false
+        },
+        {
+          "character": "E",
+          "rootPosition": {
+            "x": 1,
+            "y": 2,
+            "z": 0
+          },
+          "rotation": 0,
+          "plane": 2,
+          "lean": true,
+          "mirrorX": false
+        },
+        {
+          "character": "F",
+          "rootPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 1,
+          "plane": 2,
+          "lean": false,
+          "mirrorX": true
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "pieces": [
+        {
+          "character": "C",
+          "rootPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 1,
+          "plane": 1,
+          "lean": false,
+          "mirrorX": true
+        },
+        {
+          "character": "J",
+          "rootPosition": {
+            "x": 4,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 3,
+          "plane": 1,
+          "lean": false,
+          "mirrorX": true
+        },
+        {
+          "character": "B",
+          "rootPosition": {
+            "x": 2,
+            "y": 0,
+            "z": 1
+          },
+          "rotation": 3,
+          "plane": 0,
+          "lean": true,
+          "mirrorX": false
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "pieces": [
+        {
+          "character": "F",
+          "rootPosition": {
+            "x": 4,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 2,
+          "plane": 0,
+          "lean": false,
+          "mirrorX": false
+        },
+        {
+          "character": "J",
+          "rootPosition": {
+            "x": 1,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 0,
+          "plane": 2,
+          "lean": true,
+          "mirrorX": false
+        },
+        {
+          "character": "D",
+          "rootPosition": {
+            "x": 3,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 3,
+          "plane": 1,
+          "lean": true,
+          "mirrorX": true
+        }
+      ]
+    }
+  ]
+}

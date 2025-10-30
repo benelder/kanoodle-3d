@@ -1,0 +1,21 @@
+{
+    "name": "kanoodle-3d",
+    "version": "1.0.0",
+    "description": "3D Kanoodle puzzle solver and visualizer",
+    "type": "module",
+    "scripts": {
+        "benchmark": "./benchmark.js",
+        "benchmark:5": "./benchmark.js 5",
+        "benchmark:10": "./benchmark.js 10",
+        "benchmark:generate": "node generate-benchmark-configs.js",
+        "benchmark:compare": "node compare-results.js"
+    },
+    "keywords": [
+        "puzzle",
+        "solver",
+        "3d",
+        "kanoodle"
+    ],
+    "author": "",
+    "license": "MIT"
+}

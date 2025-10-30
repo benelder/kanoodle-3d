@@ -1,0 +1,457 @@
+#!/usr/bin/env node
+
+import { Board, Location } from './kanoodle.js';
+import * as fs from 'fs';
+import { execSync } from 'child_process';
+import * as path from 'path';
+
+/**
+ * Comprehensive benchmark tool for kanoodle-3d
+ * Compares solve() performance between current branch and origin/master
+ */
+
+// Parse command line arguments
+const args = process.argv.slice(2);
+let testCount = 20;
+let showHelp = false;
+let baseRef = 'origin/master';
+
+for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--help' || args[i] === '-h') {
+        showHelp = true;
+    } else if (args[i] === '--tests' || args[i] === '-t') {
+        testCount = parseInt(args[i + 1]);
+        i++;
+    } else if (args[i] === '--base' || args[i] === '-b') {
+        baseRef = args[i + 1];
+        i++;
+    } else if (!isNaN(parseInt(args[i]))) {
+        testCount = parseInt(args[i]);
+    }
+}
+
+if (showHelp) {
+    console.log(`
+Kanoodle-3D Performance Benchmark Tool
+
+Usage:
+  node benchmark.js [options] [testCount]
+  ./benchmark.js [options] [testCount]
+
+Options:
+  --tests, -t <number>    Number of tests to run (1-20, default: 20)
+  --base, -b <git-ref>    Base git ref to compare against (default: origin/master)
+  --help, -h              Show this help message
+
+Examples:
+  node benchmark.js                      # Run all 20 tests (compare to origin/master)
+  node benchmark.js 10                   # Run first 10 tests (compare to origin/master)
+  node benchmark.js --tests 5            # Run first 5 tests (compare to origin/master)
+  node benchmark.js -b a1b2c3d           # Compare current branch to commit a1b2c3d with 20 tests
+  node benchmark.js --base v1.0.0 10     # Compare to tag v1.0.0 with 10 tests
+
+This tool will:
+  1. Generate test configurations (if needed)
+  2. Run benchmark on current branch
+  3. Switch to origin/master and run same tests
+  4. Compare results and show performance improvement
+  5. Return to original branch
+`);
+    process.exit(0);
+}
+
+// Validate test count
+if (testCount < 1 || testCount > 20) {
+    console.error('Error: Test count must be between 1 and 20');
+    process.exit(1);
+}
+
+console.log('='.repeat(70));
+console.log('KANOODLE-3D AUTOMATED PERFORMANCE BENCHMARK');
+console.log('='.repeat(70));
+console.log(`Running ${testCount} test case(s)`);
+console.log('='.repeat(70));
+console.log();
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+function countAtomsAtZ0(piece) {
+    return piece.absolutePosition.filter(atom => atom.offset.z === 0).length;
+}
+
+function generateConfigurations(count) {
+    const configs = [];
+    const board = new Board();
+    const maxAttempts = 10000;
+
+    console.log(`Generating ${count} benchmark configuration(s)...\n`);
+
+    while (configs.length < count) {
+        const caseIndex = configs.length + 1;
+        console.log(`Case ${caseIndex}/${count}: start (placing 3 pieces)`);
+        const caseStart = Date.now();
+        board.resetBoard();
+        const placedPieces = [];
+        let validConfig = true;
+
+        for (let pieceNum = 0; pieceNum < 3; pieceNum++) {
+            console.log(`  Piece ${pieceNum + 1}/3: searching...`);
+            const unusedColors = Array.isArray(board.getUnusedColors()) ? board.getUnusedColors() : [...board.getUnusedColors()];
+            let placed = false;
+            let attempts = 0;
+
+            while (!placed && attempts < maxAttempts && unusedColors.length > 0) {
+                attempts++;
+                if (attempts % 250 === 0) {
+                    let colorsWithCandidates = 0;
+                    let maxCandidates = 0;
+                    for (const [, colorData] of unusedColors) {
+                        let count = 0;
+                        for (const pos of colorData.allPositions) {
+                            if (countAtomsAtZ0(pos) >= 2 && !board.collision(pos)) count++;
+                        }
+                        if (count > 0) {
+                            colorsWithCandidates++;
+                            if (count > maxCandidates) maxCandidates = count;
+                        }
+                    }
+                    console.log(`    ...attempts=${attempts} | colorsWithCandidates=${colorsWithCandidates} | maxCandidates=${maxCandidates}`);
+                }
+                const randomIndex = Math.floor(Math.random() * unusedColors.length);
+                const [colorKey, colorData] = unusedColors[randomIndex];
+
+                const validPositions = colorData.allPositions.filter(pos => {
+                    return countAtomsAtZ0(pos) >= 2 && !board.collision(pos);
+                });
+
+                if (validPositions.length > 0) {
+                    const randomPos = validPositions[Math.floor(Math.random() * validPositions.length)];
+
+                    try {
+                        board.placePiece(randomPos);
+                        console.log(`    ✓ placed ${randomPos.character} (candidates=${validPositions.length}, attempts=${attempts})`);
+                        placedPieces.push({
+                            character: randomPos.character,
+                            rootPosition: {
+                                x: randomPos.rootPosition.x,
+                                y: randomPos.rootPosition.y,
+                                z: randomPos.rootPosition.z
+                            },
+                            rotation: randomPos.rotation,
+                            plane: randomPos.plane,
+                            lean: randomPos.lean,
+                            mirrorX: randomPos.mirrorX
+                        });
+                        placed = true;
+                    } catch (e) {
+                        continue;
+                    }
+                }
+            }
+
+            if (!placed) {
+                console.log(`    ✗ failed to place piece ${pieceNum + 1} after ${attempts} attempts; restarting case`);
+                validConfig = false;
+                break;
+            }
+            console.log(`  Piece ${pieceNum + 1}/3: placed (elapsed ${Date.now() - caseStart}ms)`);
+        }
+
+        if (validConfig && placedPieces.length === 3) {
+            configs.push({
+                id: configs.length + 1,
+                pieces: placedPieces
+            });
+            console.log(`  Generated config ${configs.length}/${count} - Pieces: ${placedPieces.map(p => p.character).join(', ')} (elapsed ${Date.now() - caseStart}ms)`);
+        }
+        console.log(`Case ${caseIndex}/${count}: ${validConfig ? 'complete' : 'retrying'}\n`);
+    }
+
+    return configs;
+}
+
+function setupBoard(board, config) {
+    board.resetBoard();
+
+    for (const pieceConfig of config.pieces) {
+        const colorData = board.pieceRegistry.colors.get(pieceConfig.character);
+
+        const piece = colorData.allPositions.find(p =>
+            p.rootPosition.x === pieceConfig.rootPosition.x &&
+            p.rootPosition.y === pieceConfig.rootPosition.y &&
+            p.rootPosition.z === pieceConfig.rootPosition.z &&
+            p.rotation === pieceConfig.rotation &&
+            p.plane === pieceConfig.plane &&
+            p.lean === pieceConfig.lean &&
+            p.mirrorX === pieceConfig.mirrorX
+        );
+
+        if (!piece) {
+            throw new Error(`Could not find piece matching config: ${JSON.stringify(pieceConfig)}`);
+        }
+
+        board.placePiece(piece);
+    }
+}
+
+function runBenchmarkOnBranch(configurations, branchName) {
+    const board = new Board();
+    const results = [];
+
+    console.log(`\nRunning benchmark on ${branchName}...`);
+    console.log('-'.repeat(70));
+
+    let totalTime = 0;
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const config of configurations) {
+        setupBoard(board, config);
+
+        const startTime = performance.now();
+        const success = board.solve();
+        const endTime = performance.now();
+        const duration = endTime - startTime;
+
+        totalTime += duration;
+        if (success) {
+            successCount++;
+        } else {
+            failCount++;
+        }
+
+        results.push({
+            id: config.id,
+            pieces: config.pieces.map(p => p.character).join(','),
+            duration: duration.toFixed(2),
+            success: success
+        });
+
+        const status = success ? '✓' : '✗';
+        console.log(`  Test ${config.id.toString().padStart(2)}: ${config.pieces.map(p => p.character).join(', ').padEnd(10)} | ${duration.toFixed(2).padStart(10)}ms | ${status}`);
+    }
+
+    console.log('-'.repeat(70));
+    console.log(`  Solved: ${successCount}/${configurations.length} | Total: ${totalTime.toFixed(2)}ms | Avg: ${(totalTime / configurations.length).toFixed(2)}ms`);
+
+    return {
+        branch: branchName,
+        timestamp: new Date().toISOString(),
+        summary: {
+            totalTests: configurations.length,
+            solved: successCount,
+            noSolution: failCount,
+            totalTimeMs: parseFloat(totalTime.toFixed(2)),
+            averageTimeMs: parseFloat((totalTime / configurations.length).toFixed(2)),
+            minTimeMs: parseFloat(Math.min(...results.map(r => parseFloat(r.duration))).toFixed(2)),
+            maxTimeMs: parseFloat(Math.max(...results.map(r => parseFloat(r.duration))).toFixed(2))
+        },
+        results: results
+    };
+}
+
+function compareResults(optimized, original) {
+    console.log();
+    console.log('='.repeat(70));
+    console.log('PERFORMANCE COMPARISON REPORT');
+    console.log('='.repeat(70));
+    console.log();
+
+    const totalSpeedup = original.summary.totalTimeMs / optimized.summary.totalTimeMs;
+    const avgSpeedup = original.summary.averageTimeMs / optimized.summary.averageTimeMs;
+    const timeSaved = original.summary.totalTimeMs - optimized.summary.totalTimeMs;
+    const percentImprovement = ((timeSaved / original.summary.totalTimeMs) * 100);
+
+    console.log('OVERALL PERFORMANCE');
+    console.log('-'.repeat(70));
+    console.log();
+    console.log('Total Time:');
+    console.log(`  Original:   ${original.summary.totalTimeMs.toFixed(2).padStart(12)}ms`);
+    console.log(`  Optimized:  ${optimized.summary.totalTimeMs.toFixed(2).padStart(12)}ms`);
+    console.log(`  Speedup:    ${totalSpeedup.toFixed(2)}x`);
+    console.log(`  Improvement: ${percentImprovement >= 0 ? '+' : ''}${percentImprovement.toFixed(1)}% ${percentImprovement >= 0 ? 'faster' : 'slower'}`);
+    console.log(`  Time saved: ${timeSaved.toFixed(2)}ms`);
+    console.log();
+
+    console.log('Average Time per Test:');
+    console.log(`  Original:   ${original.summary.averageTimeMs.toFixed(2).padStart(12)}ms`);
+    console.log(`  Optimized:  ${optimized.summary.averageTimeMs.toFixed(2).padStart(12)}ms`);
+    console.log(`  Speedup:    ${avgSpeedup.toFixed(2)}x`);
+    console.log();
+
+    console.log('='.repeat(70));
+    console.log('PER-TEST COMPARISON');
+    console.log('='.repeat(70));
+    console.log();
+    console.log('Test | Pieces     | Original  | Optimized | Speedup | Improvement');
+    console.log('-'.repeat(70));
+
+    for (let i = 0; i < optimized.results.length; i++) {
+        const opt = optimized.results[i];
+        const orig = original.results[i];
+
+        const speedup = parseFloat(orig.duration) / parseFloat(opt.duration);
+        const improvement = ((parseFloat(orig.duration) - parseFloat(opt.duration)) / parseFloat(orig.duration) * 100);
+
+        console.log(
+            `${opt.id.toString().padStart(4)} | ` +
+            `${opt.pieces.padEnd(10)} | ` +
+            `${orig.duration.padStart(8)}ms | ` +
+            `${opt.duration.padStart(9)}ms | ` +
+            `${speedup.toFixed(2)}x`.padStart(7) + ' | ' +
+            `${improvement >= 0 ? '+' : ''}${improvement.toFixed(1)}%`.padStart(11)
+        );
+    }
+
+    console.log();
+    console.log('='.repeat(70));
+    console.log('CONCLUSION');
+    console.log('='.repeat(70));
+    console.log();
+
+    if (totalSpeedup > 1) {
+        console.log(`✓ The optimized version is ${totalSpeedup.toFixed(2)}x FASTER`);
+        console.log(`✓ Performance improved by ${percentImprovement.toFixed(1)}%`);
+        console.log(`✓ Saved ${timeSaved.toFixed(2)}ms total across ${optimized.summary.totalTests} test(s)`);
+    } else {
+        console.log(`✗ The optimized version is ${(1 / totalSpeedup).toFixed(2)}x SLOWER`);
+        console.log(`✗ Performance decreased by ${Math.abs(percentImprovement).toFixed(1)}%`);
+    }
+    console.log();
+    console.log('='.repeat(70));
+
+    // Save comparison report
+    const reportFile = `benchmark-comparison-${Date.now()}.json`;
+    fs.writeFileSync(reportFile, JSON.stringify({
+        testCount: optimized.summary.totalTests,
+        original: original,
+        optimized: optimized,
+        speedup: totalSpeedup,
+        improvementPercent: percentImprovement
+    }, null, 2));
+    console.log(`\n✓ Comparison report saved to ${reportFile}\n`);
+}
+
+function gitCommand(cmd) {
+    try {
+        return execSync(cmd, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] }).trim();
+    } catch (error) {
+        return null;
+    }
+}
+
+// ============================================================================
+// MAIN EXECUTION
+// ============================================================================
+
+async function main() {
+    try {
+        // Step 1: Generate or load configurations
+        let configurations;
+        const configFile = `benchmark-configs-${testCount}.json`;
+
+        if (fs.existsSync(configFile)) {
+            console.log(`✓ Using existing ${configFile}\n`);
+            const data = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+            configurations = data.configurations.slice(0, testCount);
+        } else {
+            configurations = generateConfigurations(testCount);
+            const output = {
+                description: 'Benchmark configurations for kanoodle-3d solve() performance testing',
+                testCount: configurations.length,
+                requirements: {
+                    piecesPerTest: 3,
+                    minAtomsAtZ0: 2,
+                    noCollisions: true
+                },
+                configurations: configurations
+            };
+            fs.writeFileSync(configFile, JSON.stringify(output, null, 2));
+            console.log(`\n✓ Saved configurations to ${configFile}\n`);
+        }
+
+        // Step 2: Get current branch
+        const currentBranch = gitCommand('git branch --show-current') || 'current';
+        console.log(`Current branch: ${currentBranch}\n`);
+
+        // Prepare persistent child runner and absolute config path so runs survive branch checkout
+        const runnerPath = path.join(process.cwd(), '.bench-child-runner.mjs');
+        const configPath = path.join(process.cwd(), '.bench-configs.json');
+        fs.writeFileSync(configPath, JSON.stringify({ configurations }, null, 0));
+
+        const runnerSource = `import { Board } from './kanoodle.js';\nimport * as fs from 'fs';\nconst args=process.argv.slice(2);let configFile=null;let branchName='current';for(let i=0;i<args.length;i++){if(args[i]==='--config'){configFile=args[i+1];i++;}else if(args[i]==='--branch'){branchName=args[i+1];i++;}}if(!configFile){throw new Error('Missing --config');}const data=JSON.parse(fs.readFileSync(configFile,'utf8'));const configurations=data.configurations;function setupBoard(board, config){board.resetBoard();for(const pieceConfig of config.pieces){const colorData=board.pieceRegistry.colors.get(pieceConfig.character);const piece=colorData.allPositions.find(p=>p.rootPosition.x===pieceConfig.rootPosition.x&&p.rootPosition.y===pieceConfig.rootPosition.y&&p.rootPosition.z===pieceConfig.rootPosition.z&&p.rotation===pieceConfig.rotation&&p.plane===pieceConfig.plane&&p.lean===pieceConfig.lean&&p.mirrorX===pieceConfig.mirrorX);if(!piece){throw new Error('Could not find piece matching config');}board.placePiece(piece);}}function run(configurations, branchName){const board=new Board();const results=[];let totalTime=0;let successCount=0;let failCount=0;for(const config of configurations){setupBoard(board, config);const startTime=performance.now();const success=board.solve();const endTime=performance.now();const duration=endTime-startTime;totalTime+=duration;if(success){successCount++;}else{failCount++;}results.push({id:config.id,pieces:config.pieces.map(p=>p.character).join(','),duration:duration.toFixed(2),success:success});}return {branch:branchName,timestamp:new Date().toISOString(),summary:{totalTests:configurations.length,solved:successCount,noSolution:failCount,totalTimeMs:parseFloat(totalTime.toFixed(2)),averageTimeMs:parseFloat((totalTime/configurations.length).toFixed(2)),minTimeMs:parseFloat(Math.min(...results.map(r=>parseFloat(r.duration))).toFixed(2)),maxTimeMs:parseFloat(Math.max(...results.map(r=>parseFloat(r.duration))).toFixed(2))},results:results};}const out=run(configurations,branchName);process.stdout.write(JSON.stringify(out));`;
+        fs.writeFileSync(runnerPath, runnerSource);
+
+        // Step 3: Run benchmark on current (optimized) branch in child process
+        const optimizedJson = execSync(`${process.execPath} ${runnerPath} --config ${configPath} --branch optimized`, { encoding: 'utf8' });
+        const optimizedResults = JSON.parse(optimizedJson);
+
+        // Step 4: Check for uncommitted changes
+        const hasChanges = gitCommand('git status --porcelain');
+        let stashed = false;
+
+        if (hasChanges) {
+            console.log('\n⚠ Stashing uncommitted changes...');
+            gitCommand('git stash push -m "Benchmark temporary stash"');
+            stashed = true;
+        }
+
+        // Step 5: Switch to base ref
+        console.log(`\nSwitching to ${baseRef}...`);
+        let checkoutResult = gitCommand(`git checkout ${baseRef} 2>&1`);
+        if (!checkoutResult && baseRef === 'origin/master') {
+            // Fallback to master only for the default case
+            checkoutResult = gitCommand('git checkout master 2>&1');
+        }
+
+        if (!checkoutResult) {
+            console.error(`Error: Could not checkout ${baseRef}${baseRef === 'origin/master' ? ' or master' : ''}`);
+            if (stashed) {
+                gitCommand('git stash pop');
+            }
+            process.exit(1);
+        }
+
+        // Step 6: Run benchmark on base ref via child runner
+        const originalJson = execSync(`${process.execPath} ${runnerPath} --config ${configPath} --branch ${baseRef}`, { encoding: 'utf8' });
+        const originalResults = JSON.parse(originalJson);
+
+        // Step 7: Return to original branch
+        console.log(`\nReturning to ${currentBranch}...`);
+        gitCommand(`git checkout ${currentBranch}`);
+
+        if (stashed) {
+            console.log('Restoring stashed changes...');
+            gitCommand('git stash pop');
+        }
+
+        // Step 8: Compare results and cleanup temp files
+        compareResults(optimizedResults, originalResults);
+        try { fs.unlinkSync(runnerPath); } catch (_) { }
+        try { fs.unlinkSync(configPath); } catch (_) { }
+
+    } catch (error) {
+        console.error('\n❌ Benchmark failed:', error.message);
+        console.error(error.stack);
+
+        // Try to return to original branch
+        try {
+            const currentBranch = gitCommand('git branch --show-current');
+            if (!currentBranch) {
+                console.log('\nAttempting to return to previous branch...');
+                gitCommand('git checkout -');
+            }
+            try { fs.unlinkSync(path.join(process.cwd(), '.bench-child-runner.mjs')); } catch (_) { }
+            try { fs.unlinkSync(path.join(process.cwd(), '.bench-configs.json')); } catch (_) { }
+        } catch (e) {
+            // Ignore
+        }
+
+        process.exit(1);
+    }
+}
+
+main();
+

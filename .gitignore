@@ -1,0 +1,26 @@
+# Node modules
+node_modules/
+
+# Benchmark results (keep configs, ignore results)
+benchmark-results-*.json
+benchmark-comparison-*.json
+.bench-child-runner.mjs
+.bench-configs.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
