@@ -169,12 +169,18 @@ export class PieceRegistry {
                                     piece.absolutePosition = piece.getAbsolutePosition();
 
                                     if (piece.isOutOfBounds() === false) {
-                                        // Convert bitmask to string for Set compatibility
-                                        const maskKey = piece.bitmask.toString();
+                                        if (!seenMasks.has(piece.bitmask)) {
+                                            seenMasks.add(piece.bitmask);
 
-                                        if (!seenMasks.has(maskKey)) {
-                                            seenMasks.add(maskKey);
-                                            toRet.push(piece);
+                                            // Build compact orientation record
+                                            const cells = [];
+                                            const abs = piece.absolutePosition;
+                                            for (let ci = 0; ci < abs.length; ci++) {
+                                                const loc = abs[ci].offset;
+                                                cells.push(loc.x * 36 + loc.y * 6 + loc.z);
+                                            }
+
+                                            toRet.push({ bitmask: piece.bitmask, cells: cells, character: piece.character });
                                         }
                                     }
                                 }
@@ -239,10 +245,9 @@ export class Board {
             throw new Error("Attempt to add piece in used location");
         }
 
-        const abs = piece.absolutePosition;
-        for (let i = 0; i < abs.length; i++) {
-            const loc = abs[i].offset;
-            const key = loc.x * 36 + loc.y * 6 + loc.z;
+        const cells = piece.cells;
+        for (let i = 0; i < cells.length; i++) {
+            const key = cells[i];
             const mapNode = this.boardMap.get(key);
             mapNode.value = piece.character;
         }
@@ -254,10 +259,9 @@ export class Board {
     }
 
     removePiece(piece) {
-        const abs = piece.absolutePosition;
-        for (let i = 0; i < abs.length; i++) {
-            const loc = abs[i].offset;
-            const key = loc.x * 36 + loc.y * 6 + loc.z;
+        const cells = piece.cells;
+        for (let i = 0; i < cells.length; i++) {
+            const key = cells[i];
             const mapNode = this.boardMap.get(key);
             mapNode.value = '-';
         }
