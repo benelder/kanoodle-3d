@@ -267,7 +267,6 @@ export class PieceRegistry {
 
 export class Board {
     boardMap = new Map();
-    usedLocations = new Map();
     piecesUsed = new Map();
     pieceRegistry = new PieceRegistry();
     occupancyMask = 0n;
@@ -294,16 +293,12 @@ export class Board {
         }
 
         this.piecesUsed = new Map();
-        this.usedLocations = new Map();
         this.occupancyMask = 0n;
     }
 
     getUnusedColors() {
-        const toRet = new Map(
-            [...this.pieceRegistry.colors]
-                .filter(([k, v]) => !this.piecesUsed.has(k))
-        );
-        return toRet;
+        return [...this.pieceRegistry.colors]
+            .filter(([k, v]) => !this.piecesUsed.has(k));
     }
 
     placePiece(piece) {
@@ -317,7 +312,6 @@ export class Board {
                     throw new Error("Attempt to add piece in used location");
                 }
                 mapNode.value = piece.character;
-                this.usedLocations.set(key, loc);
             }
             this.piecesUsed.set(piece.character, piece);
             this.occupancyMask |= piece.bitmask;
@@ -334,7 +328,6 @@ export class Board {
             const key = loc.x * 36 + loc.y * 6 + loc.z;
             const mapNode = this.boardMap.get(key);
             mapNode.value = '-';
-            this.usedLocations.delete(key);
         }
         this.piecesUsed.delete(piece.character);
         this.occupancyMask &= ~piece.bitmask;
@@ -370,12 +363,12 @@ export class Board {
     solve() {
         const unusedColors = this.getUnusedColors();
 
-        if (unusedColors.size == 0) {
+        if (unusedColors.length == 0) {
             return true;
         }
 
-        const pieces = Array.from(unusedColors.values())
-            .reduce((min, val) => val.validPositions.length < min.validPositions.length ? val : min)
+        const pieces = unusedColors
+            .reduce((min, val) => val[1].validPositions.length < min[1].validPositions.length ? val : min)[1]
             .validPositions;
 
         if (pieces.length == 0) {
