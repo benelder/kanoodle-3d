@@ -375,6 +375,21 @@ export class Board {
             return true;
         }
 
+        // Early no-solution guard: union coverage check
+        // If the union of all remaining placements cannot cover all empty cells, fail fast
+        const emptyMask = validBoardMask & ~this.occupancyMask;
+        let unionMask = 0n;
+        for (let i = 0; i < unusedColors.length; i++) {
+            const colorData = unusedColors[i][1];
+            const vpos = colorData.validPositions;
+            for (let j = 0; j < vpos.length; j++) {
+                unionMask |= vpos[j].bitmask;
+            }
+        }
+        if ((emptyMask & ~unionMask) !== 0n) {
+            return false;
+        }
+
         const pieces = unusedColors
             .reduce((min, val) => val[1].validPositions.length < min[1].validPositions.length ? val : min)[1]
             .validPositions;
