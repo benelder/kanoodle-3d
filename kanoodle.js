@@ -5,6 +5,23 @@ function positionToBit(x, y, z) {
     return BigInt(x * 36 + y * 6 + z);
 }
 
+// Pre-calculate a bitmask of all valid board positions
+// Valid positions are where x, y, z >= 0 and x+y+z <= 5
+const validBoardMask = (() => {
+    let mask = 0n;
+    for (let x = 0; x < 6; x++) {
+        for (let y = 0; y < 6; y++) {
+            for (let z = 0; z < 6; z++) {
+                if (x + y + z <= 5) {
+                    const bit = positionToBit(x, y, z);
+                    mask |= (1n << bit);
+                }
+            }
+        }
+    }
+    return mask;
+})()
+
 export class Location {
     constructor(x, y, z) {
         this.x = x;
@@ -99,61 +116,9 @@ export class Piece {
     }
 
     isOutOfBounds() {
-        const abs = this.absolutePosition;
-
-        if (abs.some((m) => m.offset.z < 0)) {
-            return true;
-        }
-        if (abs.some((m) => m.offset.x < 0)) {
-            return true;
-        }
-        if (abs.some((m) => m.offset.y < 0)) {
-            return true;
-        }
-        if (abs.some((m) => m.offset.x + m.offset.y + m.offset.z > 5)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    isInSamePositionAs(piece) {
-        if (piece.nodes.length != this.nodes.length) {
-            return false;
-        }
-
-        const t = this.absolutePosition;
-        const p = piece.absolutePosition;
-
-        // Use Set-based comparison for O(n) instead of O(n²)
-        const thisPositions = new Set(t.map(node => `${node.offset.x},${node.offset.y},${node.offset.z}`));
-        const otherPositions = new Set(p.map(node => `${node.offset.x},${node.offset.y},${node.offset.z}`));
-
-        if (thisPositions.size !== otherPositions.size) {
-            return false;
-        }
-
-        for (let pos of thisPositions) {
-            if (!otherPositions.has(pos)) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    usesLocation(x, y, z) {
-        let toRet = false;
-        for (let i = 0; i < this.absolutePosition.length; i++) {
-            const node = this.absolutePosition[i];
-            if ((x == null ? true : node.offset.x == x) &&
-                (y == null ? true : node.offset.y == y) &&
-                (z == null ? true : node.offset.z == z)) {
-                toRet = true;
-                break;
-            }
-        }
-        return toRet;
+        // Optimized: single bitwise operation
+        // If any bit in the piece's mask is NOT in the valid board mask, it's out of bounds
+        return (this.bitmask & ~validBoardMask) !== 0n;
     }
 }
 
