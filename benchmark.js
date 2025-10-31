@@ -120,14 +120,15 @@ console.log();
 // HELPER FUNCTIONS
 // ============================================================================
 
-function countAtomsAtZ0(piece) {
-    return piece.absolutePosition.filter(atom => atom.offset.z === 0).length;
+function countAtomsAtZLevel(piece, zLevel) {
+    return piece.absolutePosition.filter(atom => atom.offset.z === zLevel).length;
 }
 
 function generateConfigurations(count, startingPieceCount) {
     const configs = [];
     const board = new Board();
     const maxAttempts = 10000;
+    const maxZLevel = 5; // Maximum z-level in the board (x+y+z <= 5)
 
     console.log(`Generating ${count} benchmark configuration(s) with ${startingPieceCount} starting piece(s)...\n`);
 
@@ -138,68 +139,106 @@ function generateConfigurations(count, startingPieceCount) {
         board.resetBoard();
         const placedPieces = [];
         let validConfig = true;
+        let currentTargetLayer = 0; // Start at base layer (z=0)
 
         for (let pieceNum = 0; pieceNum < startingPieceCount; pieceNum++) {
-            console.log(`  Piece ${pieceNum + 1}/${startingPieceCount}: searching...`);
+            console.log(`  Piece ${pieceNum + 1}/${startingPieceCount}: searching on layer z=${currentTargetLayer}...`);
             const unusedColors = Array.isArray(board.getUnusedColors()) ? board.getUnusedColors() : [...board.getUnusedColors()];
             let placed = false;
             let attempts = 0;
+            let layerAdvanced = false;
 
-            while (!placed && attempts < maxAttempts && unusedColors.length > 0) {
-                attempts++;
-                if (attempts % 250 === 0) {
-                    let colorsWithCandidates = 0;
-                    let maxCandidates = 0;
-                    for (const [, colorData] of unusedColors) {
-                        let count = 0;
-                        for (const pos of colorData.allPositions) {
-                            if (countAtomsAtZ0(pos) >= 2 && !board.collision(pos)) count++;
+            // Try to place piece at current target layer
+            while (!placed && currentTargetLayer <= maxZLevel && unusedColors.length > 0) {
+                while (!placed && attempts < maxAttempts && unusedColors.length > 0) {
+                    attempts++;
+                    if (attempts % 250 === 0) {
+                        let colorsWithCandidates = 0;
+                        let maxCandidates = 0;
+                        for (const [, colorData] of unusedColors) {
+                            let count = 0;
+                            for (const pos of colorData.allPositions) {
+                                if (countAtomsAtZLevel(pos, currentTargetLayer) >= 2 && !board.collision(pos)) count++;
+                            }
+                            if (count > 0) {
+                                colorsWithCandidates++;
+                                if (count > maxCandidates) maxCandidates = count;
+                            }
                         }
-                        if (count > 0) {
-                            colorsWithCandidates++;
-                            if (count > maxCandidates) maxCandidates = count;
+                        console.log(`    ...attempts=${attempts} | layer=z${currentTargetLayer} | colorsWithCandidates=${colorsWithCandidates} | maxCandidates=${maxCandidates}`);
+                    }
+                    const randomIndex = Math.floor(Math.random() * unusedColors.length);
+                    const [colorKey, colorData] = unusedColors[randomIndex];
+
+                    const validPositions = colorData.allPositions.filter(pos => {
+                        return countAtomsAtZLevel(pos, currentTargetLayer) >= 2 && !board.collision(pos);
+                    });
+
+                    if (validPositions.length > 0) {
+                        const randomPos = validPositions[Math.floor(Math.random() * validPositions.length)];
+
+                        try {
+                            board.placePiece(randomPos);
+                            console.log(`    ✓ placed ${randomPos.character} on layer z=${currentTargetLayer} (candidates=${validPositions.length}, attempts=${attempts})`);
+                            placedPieces.push({
+                                character: randomPos.character,
+                                rootPosition: {
+                                    x: randomPos.rootPosition.x,
+                                    y: randomPos.rootPosition.y,
+                                    z: randomPos.rootPosition.z
+                                },
+                                rotation: randomPos.rotation,
+                                plane: randomPos.plane,
+                                lean: randomPos.lean,
+                                mirrorX: randomPos.mirrorX
+                            });
+                            placed = true;
+                        } catch (e) {
+                            continue;
                         }
                     }
-                    console.log(`    ...attempts=${attempts} | colorsWithCandidates=${colorsWithCandidates} | maxCandidates=${maxCandidates}`);
                 }
-                const randomIndex = Math.floor(Math.random() * unusedColors.length);
-                const [colorKey, colorData] = unusedColors[randomIndex];
 
-                const validPositions = colorData.allPositions.filter(pos => {
-                    return countAtomsAtZ0(pos) >= 2 && !board.collision(pos);
-                });
-
-                if (validPositions.length > 0) {
-                    const randomPos = validPositions[Math.floor(Math.random() * validPositions.length)];
-
-                    try {
-                        board.placePiece(randomPos);
-                        console.log(`    ✓ placed ${randomPos.character} (candidates=${validPositions.length}, attempts=${attempts})`);
-                        placedPieces.push({
-                            character: randomPos.character,
-                            rootPosition: {
-                                x: randomPos.rootPosition.x,
-                                y: randomPos.rootPosition.y,
-                                z: randomPos.rootPosition.z
-                            },
-                            rotation: randomPos.rotation,
-                            plane: randomPos.plane,
-                            lean: randomPos.lean,
-                            mirrorX: randomPos.mirrorX
-                        });
-                        placed = true;
-                    } catch (e) {
-                        continue;
+                // If we couldn't place on current layer after maxAttempts, advance to next layer
+                if (!placed && currentTargetLayer < maxZLevel) {
+                    // Check if there are any valid positions on current layer
+                    let hasValidPositions = false;
+                    for (const [, colorData] of unusedColors) {
+                        for (const pos of colorData.allPositions) {
+                            if (countAtomsAtZLevel(pos, currentTargetLayer) >= 2 && !board.collision(pos)) {
+                                hasValidPositions = true;
+                                break;
+                            }
+                        }
+                        if (hasValidPositions) break;
                     }
+
+                    // Advance to next layer if no valid positions exist, or if we've exhausted attempts
+                    currentTargetLayer++;
+                    attempts = 0; // Reset attempts for new layer
+                    layerAdvanced = true;
+                    if (hasValidPositions) {
+                        console.log(`    → Advancing to layer z=${currentTargetLayer} (exhausted attempts on previous layer)`);
+                    } else {
+                        console.log(`    → Advancing to layer z=${currentTargetLayer} (no valid positions on previous layer)`);
+                    }
+                } else if (!placed) {
+                    // Can't place even at max layer
+                    break;
                 }
             }
 
             if (!placed) {
-                console.log(`    ✗ failed to place piece ${pieceNum + 1} after ${attempts} attempts; restarting case`);
+                console.log(`    ✗ failed to place piece ${pieceNum + 1} after ${attempts} attempts on layer z=${currentTargetLayer}; restarting case`);
                 validConfig = false;
                 break;
             }
-            console.log(`  Piece ${pieceNum + 1}/${startingPieceCount}: placed (elapsed ${Date.now() - caseStart}ms)`);
+
+            if (layerAdvanced) {
+                console.log(`  Piece ${pieceNum + 1}/${startingPieceCount}: placed on layer z=${currentTargetLayer} (elapsed ${Date.now() - caseStart}ms)`);
+            } else {
+                console.log(`  Piece ${pieceNum + 1}/${startingPieceCount}: placed (elapsed ${Date.now() - caseStart}ms)`);
+            }
         }
 
         if (validConfig && placedPieces.length === startingPieceCount) {
