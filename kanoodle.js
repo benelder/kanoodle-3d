@@ -243,7 +243,6 @@ export class PieceRegistry {
 }
 
 export class Board {
-    boardMap = new Map();
     piecesUsed = new Map();
     pieceRegistry = new PieceRegistry();
     occupancyMask = 0n;
@@ -253,22 +252,6 @@ export class Board {
     }
 
     #initializeBoard() {
-        this.boardMap = new Map();
-
-        for (let i = 0; i < 6; i++) {
-            for (let j = 0; j < 6; j++) {
-                for (let k = 0; k < 6; k++) {
-                    const key = i * 36 + j * 6 + k;
-
-                    if (i + j + k < 6) {
-                        this.boardMap.set(key, { x: i, y: j, z: k, value: '-' })
-                    } else {
-                        this.boardMap.set(key, { x: i, y: j, z: k, value: ' ' })
-                    }
-                }
-            }
-        }
-
         this.piecesUsed = new Map();
         this.occupancyMask = 0n;
     }
@@ -284,15 +267,6 @@ export class Board {
             throw new Error("Attempt to add piece in used location");
         }
 
-        const cells = piece.cells;
-        for (let i = 0; i < cells.length; i++) {
-            const key = cells[i];
-            const mapNode = this.boardMap.get(key);
-            if (!mapNode) {
-                throw new Error(`Invalid board position key ${key} for piece ${piece.character}`);
-            }
-            mapNode.value = piece.character;
-        }
         this.piecesUsed.set(piece.character, piece);
         this.occupancyMask |= piece.bitmask;
 
@@ -301,15 +275,6 @@ export class Board {
     }
 
     removePiece(piece) {
-        const cells = piece.cells;
-        for (let i = 0; i < cells.length; i++) {
-            const key = cells[i];
-            const mapNode = this.boardMap.get(key);
-            if (!mapNode) {
-                throw new Error(`Invalid board position key ${key} during remove for piece ${piece.character}`);
-            }
-            mapNode.value = '-';
-        }
         this.piecesUsed.delete(piece.character);
         this.occupancyMask &= ~piece.bitmask;
 

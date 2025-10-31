@@ -131,16 +131,24 @@ function getMaterial(val) {
 
 function drawBoard() {
     clearBoard();
-    const values = board.boardMap.values();
-    for (let value of values) {
-        if (value.value != ' ' && value.value != '-') {
+    // Iterate over placed pieces and draw their positions
+    for (const piece of board.piecesUsed.values()) {
+        const character = piece.character;
+        const absolutePositions = piece.absolutePosition;
+
+        for (let i = 0; i < absolutePositions.length; i++) {
+            const atom = absolutePositions[i];
+            const x = atom.offset.x;
+            const y = atom.offset.y;
+            const z = atom.offset.z;
+
             const geometry = new THREE.SphereGeometry(radius, 32, 32);
-            const material = getMaterial(value.value);
+            const material = getMaterial(character);
             const sphere = new THREE.Mesh(geometry, material);
             sphere.position.set(
-                value.y * distancej + (value.z),
-                value.z * distancek,
-                value.x * distancei + (value.y + value.z) * 2
+                y * distancej + (z),
+                z * distancek,
+                x * distancei + (y + z) * 2
             );
             scene.add(sphere);
         }
