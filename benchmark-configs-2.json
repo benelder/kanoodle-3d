@@ -1,0 +1,93 @@
+{
+  "description": "Benchmark configurations for kanoodle-3d solve() performance testing",
+  "testCount": 2,
+  "requirements": {
+    "piecesPerTest": 3,
+    "minAtomsAtZ0": 2,
+    "noCollisions": true
+  },
+  "configurations": [
+    {
+      "id": 1,
+      "pieces": [
+        {
+          "character": "G",
+          "rootPosition": {
+            "x": 4,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 3,
+          "plane": 0,
+          "lean": true,
+          "mirrorX": true
+        },
+        {
+          "character": "E",
+          "rootPosition": {
+            "x": 1,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 0,
+          "plane": 2,
+          "lean": true,
+          "mirrorX": false
+        },
+        {
+          "character": "I",
+          "rootPosition": {
+            "x": 3,
+            "y": 1,
+            "z": 0
+          },
+          "rotation": 3,
+          "plane": 0,
+          "lean": true,
+          "mirrorX": true
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "pieces": [
+        {
+          "character": "I",
+          "rootPosition": {
+            "x": 2,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 0,
+          "plane": 2,
+          "lean": false,
+          "mirrorX": false
+        },
+        {
+          "character": "E",
+          "rootPosition": {
+            "x": 3,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 2,
+          "plane": 1,
+          "lean": false,
+          "mirrorX": false
+        },
+        {
+          "character": "C",
+          "rootPosition": {
+            "x": 5,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 3,
+          "plane": 0,
+          "lean": true,
+          "mirrorX": true
+        }
+      ]
+    }
+  ]
+}

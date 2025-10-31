@@ -1,0 +1,134 @@
+{
+  "description": "Benchmark configurations for kanoodle-3d solve() performance testing",
+  "testCount": 3,
+  "requirements": {
+    "piecesPerTest": 3,
+    "minAtomsAtZ0": 2,
+    "noCollisions": true
+  },
+  "configurations": [
+    {
+      "id": 1,
+      "pieces": [
+        {
+          "character": "K",
+          "rootPosition": {
+            "x": 0,
+            "y": 3,
+            "z": 0
+          },
+          "rotation": 0,
+          "plane": 0,
+          "lean": true,
+          "mirrorX": false
+        },
+        {
+          "character": "F",
+          "rootPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 0,
+          "plane": 0,
+          "lean": false,
+          "mirrorX": false
+        },
+        {
+          "character": "B",
+          "rootPosition": {
+            "x": 2,
+            "y": 0,
+            "z": 1
+          },
+          "rotation": 0,
+          "plane": 0,
+          "lean": true,
+          "mirrorX": true
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "pieces": [
+        {
+          "character": "L",
+          "rootPosition": {
+            "x": 1,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 1,
+          "plane": 2,
+          "lean": false,
+          "mirrorX": false
+        },
+        {
+          "character": "F",
+          "rootPosition": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 1,
+          "plane": 1,
+          "lean": false,
+          "mirrorX": true
+        },
+        {
+          "character": "G",
+          "rootPosition": {
+            "x": 4,
+            "y": 0,
+            "z": 1
+          },
+          "rotation": 3,
+          "plane": 2,
+          "lean": true,
+          "mirrorX": false
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "pieces": [
+        {
+          "character": "H",
+          "rootPosition": {
+            "x": 1,
+            "y": 1,
+            "z": 2
+          },
+          "rotation": 4,
+          "plane": 1,
+          "lean": true,
+          "mirrorX": false
+        },
+        {
+          "character": "E",
+          "rootPosition": {
+            "x": 1,
+            "y": 0,
+            "z": 0
+          },
+          "rotation": 0,
+          "plane": 2,
+          "lean": true,
+          "mirrorX": false
+        },
+        {
+          "character": "I",
+          "rootPosition": {
+            "x": 4,
+            "y": 0,
+            "z": 1
+          },
+          "rotation": 4,
+          "plane": 1,
+          "lean": true,
+          "mirrorX": true
+        }
+      ]
+    }
+  ]
+}
