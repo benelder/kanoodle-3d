@@ -278,67 +278,12 @@ function setupBoard(board, config) {
     }
 }
 
-function runBenchmarkOnBranch(configurations, branchName) {
-    const board = new Board();
-    const results = [];
-
-    console.log(`\nRunning benchmark on ${branchName}...`);
-    console.log('-'.repeat(70));
-
-    let totalTime = 0;
-    let successCount = 0;
-    let failCount = 0;
-
-    for (const config of configurations) {
-        setupBoard(board, config);
-
-        const startTime = performance.now();
-        const success = board.solve();
-        const endTime = performance.now();
-        const duration = endTime - startTime;
-
-        totalTime += duration;
-        if (success) {
-            successCount++;
-        } else {
-            failCount++;
-        }
-
-        results.push({
-            id: config.id,
-            pieces: config.pieces.map(p => p.character).join(','),
-            duration: duration.toFixed(2),
-            success: success
-        });
-
-        const status = success ? '✓' : '✗';
-        console.log(`  Test ${config.id.toString().padStart(2)}: ${config.pieces.map(p => p.character).join(', ').padEnd(10)} | ${duration.toFixed(2).padStart(10)}ms | ${status}`);
-    }
-
-    console.log('-'.repeat(70));
-    console.log(`  Solved: ${successCount}/${configurations.length} | Total: ${totalTime.toFixed(2)}ms | Avg: ${(totalTime / configurations.length).toFixed(2)}ms`);
-
-    return {
-        branch: branchName,
-        timestamp: new Date().toISOString(),
-        summary: {
-            totalTests: configurations.length,
-            solved: successCount,
-            noSolution: failCount,
-            totalTimeMs: parseFloat(totalTime.toFixed(2)),
-            averageTimeMs: parseFloat((totalTime / configurations.length).toFixed(2)),
-            minTimeMs: parseFloat(Math.min(...results.map(r => parseFloat(r.duration))).toFixed(2)),
-            maxTimeMs: parseFloat(Math.max(...results.map(r => parseFloat(r.duration))).toFixed(2))
-        },
-        results: results
-    };
-}
-
 function compareResults(optimized, original) {
+    const repeatCount = 73;
     console.log();
-    console.log('='.repeat(70));
+    console.log('='.repeat(repeatCount));
     console.log('PERFORMANCE COMPARISON REPORT');
-    console.log('='.repeat(70));
+    console.log('='.repeat(repeatCount));
     console.log();
 
     const totalSpeedup = original.summary.totalTimeMs / optimized.summary.totalTimeMs;
@@ -347,28 +292,28 @@ function compareResults(optimized, original) {
     const percentImprovement = ((timeSaved / original.summary.totalTimeMs) * 100);
 
     console.log('OVERALL PERFORMANCE');
-    console.log('-'.repeat(70));
+    console.log('-'.repeat(repeatCount));
     console.log();
     console.log('Total Time:');
     console.log(`  Original:   ${original.summary.totalTimeMs.toFixed(2).padStart(12)}ms`);
     console.log(`  Optimized:  ${optimized.summary.totalTimeMs.toFixed(2).padStart(12)}ms`);
-    console.log(`  Speedup:    ${totalSpeedup.toFixed(2)}x`);
+    console.log(`  Speedup:    ${totalSpeedup.toFixed(2).padStart(13)}x`);
     console.log(`  Improvement: ${percentImprovement >= 0 ? '+' : ''}${percentImprovement.toFixed(1)}% ${percentImprovement >= 0 ? 'faster' : 'slower'}`);
-    console.log(`  Time saved: ${timeSaved.toFixed(2)}ms`);
+    console.log(`  Time saved: ${timeSaved.toFixed(2).padStart(12)}ms`);
     console.log();
 
     console.log('Average Time per Test:');
     console.log(`  Original:   ${original.summary.averageTimeMs.toFixed(2).padStart(12)}ms`);
     console.log(`  Optimized:  ${optimized.summary.averageTimeMs.toFixed(2).padStart(12)}ms`);
-    console.log(`  Speedup:    ${avgSpeedup.toFixed(2)}x`);
+    console.log(`  Speedup:    ${avgSpeedup.toFixed(2).padStart(13)}x`);
     console.log();
 
-    console.log('='.repeat(70));
+    console.log('='.repeat(repeatCount));
     console.log('PER-TEST COMPARISON');
-    console.log('='.repeat(70));
+    console.log('='.repeat(repeatCount));
     console.log();
-    console.log('Test | Pieces     | Original  | Optimized | Speedup | Improvement');
-    console.log('-'.repeat(70));
+    console.log('Test | Pieces     | Original   | Optimized   | Speedup      | Improvement');
+    console.log('-'.repeat(repeatCount));
 
     for (let i = 0; i < optimized.results.length; i++) {
         const opt = optimized.results[i];
@@ -382,15 +327,15 @@ function compareResults(optimized, original) {
             `${opt.pieces.padEnd(10)} | ` +
             `${orig.duration.padStart(8)}ms | ` +
             `${opt.duration.padStart(9)}ms | ` +
-            `${speedup.toFixed(2)}x`.padStart(7) + ' | ' +
+            `${speedup.toFixed(2)}x`.padStart(12) + ' | ' +
             `${improvement >= 0 ? '+' : ''}${improvement.toFixed(1)}%`.padStart(11)
         );
     }
 
     console.log();
-    console.log('='.repeat(70));
+    console.log('='.repeat(repeatCount));
     console.log('CONCLUSION');
-    console.log('='.repeat(70));
+    console.log('='.repeat(repeatCount));
     console.log();
 
     if (totalSpeedup > 1) {
@@ -402,7 +347,7 @@ function compareResults(optimized, original) {
         console.log(`✗ Performance decreased by ${Math.abs(percentImprovement).toFixed(1)}%`);
     }
     console.log();
-    console.log('='.repeat(70));
+    console.log('='.repeat(repeatCount));
 
     // Save comparison report
     const reportFile = `benchmark-comparison-${Date.now()}.json`;
