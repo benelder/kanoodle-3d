@@ -5,7 +5,7 @@ function positionToBit(x, y, z) {
     return BigInt(x * 36 + y * 6 + z);
 }
 
-// Pre-calculate a bitmask of all valid board positions
+// Pre-calculate a bitboard for all valid board positions
 // Valid positions are where x, y, z >= 0 and x+y+z <= 5
 const validBoardMask = (() => {
     let mask = 0n;
@@ -21,6 +21,42 @@ const validBoardMask = (() => {
     }
     return mask;
 })()
+
+// Shared transform functions used by both Piece and PieceRegistry
+function applyMirrorX(offset, mirrorX) {
+    return mirrorX ? new Location(offset.x + offset.y, -offset.y, offset.z) : offset;
+}
+
+function applyLean(offset, lean) {
+    return lean ? new Location(offset.x, 0, offset.y) : offset;
+}
+
+function rotateOffset(location, rotation) {
+    if (rotation === 0) {
+        return location;
+    }
+
+    if (rotation > 5) {
+        throw new Error('Invalid rotation');
+    }
+
+    let r = new Location(location.x, location.y, location.z);
+    for (let i = 0; i < rotation; i++) {
+        r = new Location(-r.y, r.x + r.y, r.z);
+    }
+    return r;
+}
+
+function transposeToPlane(plane, origin) {
+    if (plane === 0) {
+        return origin;
+    } else if (plane === 1) {
+        return new Location(5 - (origin.x + origin.y + origin.z), origin.x, origin.z);
+    } else if (plane === 2) {
+        return new Location(origin.y, 5 - (origin.x + origin.y + origin.z), origin.z);
+    }
+    throw new Error('Plane must be between 0 and 2');
+}
 
 export class Location {
     constructor(x, y, z) {
@@ -50,60 +86,18 @@ export class Piece {
     absolutePosition;
     bitmask;
 
-    #applyLean(offset) {
-        if (this.lean === true) {
-            return new Location(offset.x, 0, offset.y);
-        } else {
-            return offset;
-        }
-    }
-
-    #applyMirrorX(offset) {
-        return new Location(offset.x + offset.y, -offset.y, offset.z);
-    }
-
-    #transposeToPlane(origin) {
-        if (this.plane === 0) {
-            return origin;
-        } else if (this.plane === 1) {
-            return new Location(5 - (origin.x + origin.y + origin.z), origin.x, origin.z);
-        } else if (this.plane === 2) {
-            return new Location(origin.y, 5 - (origin.x + origin.y + origin.z), origin.z);
-        }
-
-        throw new Error('Plane must be between 0 and 2');
-    }
-
-    #rotate(location) {
-        if (this.rotation == 0) {
-            return location;
-        }
-
-        if (this.rotation > 5) {
-            throw new Error('Invalid rotation');
-        }
-
-        let toRet = new Location(location.x, location.y, location.z);
-
-        for (let i = 0; i < this.rotation; i++) {
-            toRet = new Location(-toRet.y, toRet.x + toRet.y, toRet.z);
-        }
-
-        return toRet;
-    }
-
     getAbsolutePosition() {
         var toRet = [];
         var mask = 0n;
 
         for (let i = 0; i < this.nodes.length; i++) {
-            let start = (this.mirrorX ? this.#applyMirrorX(this.nodes[i].offset) : this.nodes[i].offset);
-            let offset = this.#rotate(start);
-            let lean = this.#applyLean(offset);
-            let origin = new Location(this.rootPosition.x + lean.x,
-                this.rootPosition.y + lean.y,
-                this.rootPosition.z + lean.z);
-            var transpose = this.#transposeToPlane(origin);
+            let start = applyMirrorX(this.nodes[i].offset, this.mirrorX);
+            let offset = rotateOffset(start, this.rotation);
+            let leanResult = applyLean(offset, this.lean);
+            let origin = new Location(this.rootPosition.x + leanResult.x,
+                this.rootPosition.y + leanResult.y,
+                this.rootPosition.z + leanResult.z);
+            var transpose = transposeToPlane(this.plane, origin);
             toRet.push(new Atom(transpose.x, transpose.y, transpose.z));
 
             // Calculate bitmask for this position
@@ -154,31 +148,6 @@ export class PieceRegistry {
         // Build base piece once to access node offsets and character
         const basePiece = constr();
         const baseNodes = basePiece.nodes.map(n => n.offset);
-
-        // Helpers that mirror Piece's private transforms
-        function applyMirrorX(offset, mirrorX) {
-            return mirrorX ? new Location(offset.x + offset.y, -offset.y, offset.z) : offset;
-        }
-
-        function applyLean(offset, lean) {
-            return lean ? new Location(offset.x, 0, offset.y) : offset;
-        }
-
-        function rotateOffset(location, rotation) {
-            if (rotation === 0) return location;
-            let r = new Location(location.x, location.y, location.z);
-            for (let i = 0; i < rotation; i++) {
-                r = new Location(-r.y, r.x + r.y, r.z);
-            }
-            return r;
-        }
-
-        function transposeToPlane(plane, origin) {
-            if (plane === 0) return origin;
-            if (plane === 1) return new Location(5 - (origin.x + origin.y + origin.z), origin.x, origin.z);
-            if (plane === 2) return new Location(origin.y, 5 - (origin.x + origin.y + origin.z), origin.z);
-            throw new Error('Plane must be between 0 and 2');
-        }
 
         // Precompute orientation-relative offsets (pre-transpose)
         const orientationCache = [];
