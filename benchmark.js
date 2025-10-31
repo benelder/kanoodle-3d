@@ -348,29 +348,8 @@ function gitCommand(cmd) {
 
 async function main() {
     try {
-        // Step 1: Generate or load configurations
-        let configurations;
-        const configFile = `benchmark-configs-${testCount}.json`;
-
-        if (fs.existsSync(configFile)) {
-            console.log(`✓ Using existing ${configFile}\n`);
-            const data = JSON.parse(fs.readFileSync(configFile, 'utf8'));
-            configurations = data.configurations.slice(0, testCount);
-        } else {
-            configurations = generateConfigurations(testCount);
-            const output = {
-                description: 'Benchmark configurations for kanoodle-3d solve() performance testing',
-                testCount: configurations.length,
-                requirements: {
-                    piecesPerTest: 3,
-                    minAtomsAtZ0: 2,
-                    noCollisions: true
-                },
-                configurations: configurations
-            };
-            fs.writeFileSync(configFile, JSON.stringify(output, null, 2));
-            console.log(`\n✓ Saved configurations to ${configFile}\n`);
-        }
+        // Step 1: Generate configurations
+        const configurations = generateConfigurations(testCount);
 
         // Step 2: Get current branch
         const currentBranch = gitCommand('git branch --show-current') || 'current';

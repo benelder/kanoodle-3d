@@ -4,10 +4,10 @@ This benchmark system allows you to compare the performance of the `solve()` met
 
 ## Overview
 
-The benchmark system consists of:
-1. **Configuration Generator** - Creates 20 test cases with 3 pieces each
-2. **Benchmark Runner** - Executes solve() and measures performance
-3. **Results Comparator** - Analyzes and compares results between branches
+The benchmark system automatically:
+1. **Generates Test Configurations** - Creates random test cases with 3 pieces each (fresh configs each run)
+2. **Runs Benchmark** - Executes solve() and measures performance on both branches
+3. **Compares Results** - Analyzes and compares results between branches
 
 ## Requirements
 
@@ -16,105 +16,76 @@ Each test configuration:
 - All pieces are in valid positions (no collisions)
 - Each piece has at least 2 atoms touching the base (z=0)
 - Same configurations are used for both branches (apples-to-apples comparison)
+- Fresh random configurations are generated on each run for better randomization
 
-## Step-by-Step Instructions
+## Quick Start
 
-### Step 1: Generate Test Configurations (on current branch)
-
-First, generate the 20 test configurations that will be used for both branches:
-
-```bash
-node generate-benchmark-configs.js
-```
-
-This creates `benchmark-configs.json` with 20 test cases.
-
-**Important:** Commit this file so it's available to both branches!
+The simplest way to run a benchmark:
 
 ```bash
-git add benchmark-configs.json
-git commit -m "Add benchmark configurations for performance testing"
-```
-
-### Step 2: Run Benchmark on Current (Optimized) Branch
-
-Run the benchmark on your current optimized branch:
-
-```bash
-GIT_BRANCH=optimized node run-benchmark.js
+./benchmark.js
 ```
 
 This will:
-- Run all 20 test cases
-- Measure solve() performance for each
-- Display results in the console
-- Save results to `benchmark-results-optimized-{timestamp}.json`
+1. Generate fresh random test configurations
+2. Run benchmark on your current branch (optimized)
+3. Automatically switch to origin/master
+4. Run the same tests on the original branch
+5. Switch back to your original branch
+6. Compare results and display a detailed report
 
-Rename the results file for easier comparison:
+## Configurable Test Count
 
-```bash
-# Find the most recent optimized results file and rename it
-mv benchmark-results-optimized-*.json benchmark-results-optimized.json
-```
-
-### Step 3: Run Benchmark on Original Branch
-
-Switch to the original branch and run the same tests:
+Run with a specific number of tests (1-20):
 
 ```bash
-# Stash or commit any changes
-git stash
-
-# Switch to origin/master
-git checkout origin/master
-
-# Run benchmark with the same configurations
-GIT_BRANCH=original node run-benchmark.js
-
-# Rename results file
-mv benchmark-results-original-*.json benchmark-results-original.json
-
-# Return to your optimized branch
-git checkout -
-
-# Restore any stashed changes
-git stash pop
+./benchmark.js 5      # Run 5 tests
+./benchmark.js 10     # Run 10 tests
+./benchmark.js 20     # Run all 20 tests (default)
 ```
 
-### Step 4: Compare Results
-
-Compare the performance between both branches:
+Or using flags:
 
 ```bash
-node compare-results.js benchmark-results-optimized.json benchmark-results-original.json
+./benchmark.js --tests 5
+./benchmark.js -t 10
+./benchmark.js --base <git-ref>  # Compare to a specific commit/tag/branch
 ```
 
-This will display:
-- Overall speedup and improvement percentage
-- Per-test comparison
-- Statistical analysis
-- Best/worst improvements
+## What Happens
 
-## Automated Benchmark Script
+1. **Generates configurations** (fresh random configs each run)
+   - Creates N test cases with 3 pieces each
+   - Each piece has ≥2 atoms touching base (z=0)
+   - No collisions, valid positions only
+   - Ensures randomization across multiple benchmark runs
 
-For convenience, you can use the provided shell script to automate the entire process:
+2. **Runs on current branch** (optimized)
+   - Executes solve() for each test
+   - Measures precise timing with performance.now()
+   - Displays real-time progress
 
-```bash
-./run-full-benchmark.sh
-```
+3. **Switches to origin/master**
+   - Stashes uncommitted changes (if any)
+   - Checks out origin/master branch
 
-This script will:
-1. Generate configurations (if not already present)
-2. Run benchmark on current branch
-3. Run benchmark on origin/master
-4. Compare and display results
-5. Return to your original branch
+4. **Runs on original branch**
+   - Executes same tests with original code
+   - Uses identical configurations (apples-to-apples)
+
+5. **Returns to your branch**
+   - Checks out original branch
+   - Restores stashed changes
+
+6. **Compares and reports**
+   - Calculates speedup multiplier
+   - Shows per-test comparison
+   - Displays overall statistics
+   - Exports JSON report
 
 ## Output Files
 
-- `benchmark-configs.json` - Test configurations (20 cases)
-- `benchmark-results-optimized.json` - Results from optimized branch
-- `benchmark-results-original.json` - Results from original branch
+- `benchmark-comparison-{timestamp}.json` - Detailed comparison report
 
 ## Example Output
 
@@ -157,9 +128,25 @@ Average Time per Test:
 **Issue:** "Cannot find module './kanoodle.js'"
 - **Solution:** Make sure you're in the project root directory
 
-**Issue:** "benchmark-configs.json not found"
-- **Solution:** Run `node generate-benchmark-configs.js` first
+**Issue:** "Could not checkout origin/master"
+- **Solution:** Ensure origin/master exists and is up to date. Try `git fetch origin` first.
 
-**Issue:** Different number of tests between branches
-- **Solution:** Ensure `benchmark-configs.json` is committed and available in both branches
+**Issue:** Branch switching fails
+- **Solution:** Ensure you have no uncommitted changes that can't be stashed, or commit them first
+
+**Issue:** Inconsistent results between runs
+- **Solution:** This is expected - configurations are randomly generated each run for better test coverage. Run with more tests (10-20) for better statistical averaging
+
+**Issue:** Benchmark takes too long
+- **Solution:** Use fewer tests: `./benchmark.js 5` or `./benchmark.js 3`
+
+## Manual Comparison of Results Files
+
+If you have existing comparison JSON files and want to compare them, you can use:
+
+```bash
+node compare-results.js <optimized-results.json> <original-results.json>
+```
+
+This standalone tool compares two benchmark result files and displays detailed statistics.
 

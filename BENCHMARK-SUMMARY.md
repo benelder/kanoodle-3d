@@ -51,10 +51,11 @@ npm run benchmark
 
 ## What Happens
 
-1. **Generates configurations** (if not already cached for that count)
+1. **Generates configurations** (fresh random configs each run)
    - Creates N test cases with 3 pieces each
    - Each piece has ≥2 atoms touching base (z=0)
    - No collisions, valid positions only
+   - Ensures randomization across multiple benchmark runs
 
 2. **Runs on current branch** (optimized)
    - Executes solve() for each test
@@ -64,7 +65,6 @@ npm run benchmark
 3. **Switches to origin/master**
    - Stashes uncommitted changes (if any)
    - Checks out origin/master branch
-   - Restores configuration files if needed
 
 4. **Runs on original branch**
    - Executes same tests with original code
@@ -123,7 +123,6 @@ CONCLUSION
 
 ## Files Created
 
-- `benchmark-configs-{N}.json` - Cached test configurations
 - `benchmark-comparison-{timestamp}.json` - Detailed comparison report
 
 ## Understanding Results
@@ -177,7 +176,6 @@ Your optimized branch includes:
 ## Files You Can Commit
 
 - ✓ `benchmark.js` - Main executable
-- ✓ `benchmark-configs-*.json` - Test configurations
 - ✓ `README-BENCHMARK.md` - Documentation
 - ✗ `benchmark-comparison-*.json` - Results (in .gitignore)
 

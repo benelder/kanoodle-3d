@@ -9,7 +9,7 @@ The easiest way to run the full benchmark:
 ```
 
 This will:
-1. Generate 20 test configurations (if needed)
+1. Generate 20 test configurations (fresh random configs each run)
 2. Run benchmark on your current branch
 3. Switch to origin/master and run the same tests
 4. Compare and display the results
@@ -70,9 +70,7 @@ You'll see:
 
 ## Files Created
 
-- `benchmark-configs.json` - Test configurations (commit this!)
-- `benchmark-results-optimized.json` - Results from optimized branch
-- `benchmark-results-original.json` - Results from original branch
+- `benchmark-comparison-{timestamp}.json` - Detailed comparison report
 
 ## Example Results
 
@@ -92,6 +90,5 @@ Total Time:
 ## Troubleshooting
 
 - **Error: Cannot find module**: Make sure you're in the project root
-- **Missing configs**: Run `npm run benchmark:generate` first
-- **Different results**: Ensure `benchmark-configs.json` is committed
+- **Inconsistent results**: Run with more tests for better statistical averaging
 

@@ -35,7 +35,7 @@ npm run benchmark:10     # Run 10 tests
 
 ## What It Does
 
-1. ✓ Generates test configurations (if needed)
+1. ✓ Generates test configurations (fresh random configs each run)
 2. ✓ Runs benchmark on your current branch (optimized)
 3. ✓ Automatically switches to `origin/master`
 4. ✓ Runs the same tests on the original branch
@@ -103,7 +103,6 @@ Each test:
 
 ## Files Created
 
-- `benchmark-configs-{N}.json` - Test configurations for N tests
 - `benchmark-comparison-{timestamp}.json` - Detailed comparison report
 
 ## Help
