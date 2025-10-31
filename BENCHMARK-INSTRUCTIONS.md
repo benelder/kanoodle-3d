@@ -5,14 +5,14 @@ This benchmark system allows you to compare the performance of the `solve()` met
 ## Overview
 
 The benchmark system automatically:
-1. **Generates Test Configurations** - Creates random test cases with 3 pieces each (fresh configs each run)
+1. **Generates Test Configurations** - Creates random test cases with configurable starting pieces (default: 3, range: 0-11)
 2. **Runs Benchmark** - Executes solve() and measures performance on both branches
 3. **Compares Results** - Analyzes and compares results between branches
 
 ## Requirements
 
 Each test configuration:
-- Places exactly 3 pieces on the board before calling `solve()`
+- Places a configurable number of pieces on the board before calling `solve()` (default: 3, range: 0-11)
 - All pieces are in valid positions (no collisions)
 - Each piece has at least 2 atoms touching the base (z=0)
 - Same configurations are used for both branches (apples-to-apples comparison)
@@ -26,7 +26,7 @@ The simplest way to run a benchmark:
 ./benchmark.js
 ```
 
-This will:
+This will (using default settings: 2 tests, 3 starting pieces):
 1. Generate fresh random test configurations
 2. Run benchmark on your current branch (optimized)
 3. Automatically switch to origin/master
@@ -41,7 +41,7 @@ Run with a specific number of tests (1-20):
 ```bash
 ./benchmark.js 5      # Run 5 tests
 ./benchmark.js 10     # Run 10 tests
-./benchmark.js 20     # Run all 20 tests (default)
+./benchmark.js 20     # Run all 20 tests
 ```
 
 Or using flags:
@@ -52,10 +52,21 @@ Or using flags:
 ./benchmark.js --base <git-ref>  # Compare to a specific commit/tag/branch
 ```
 
+## Configurable Starting Piece Count
+
+Run with a specific number of starting pieces (0-11, default: 3):
+
+```bash
+./benchmark.js --pieces 5        # Run 2 tests with 5 starting pieces (default)
+./benchmark.js -p 0              # Run 2 tests with 0 starting pieces (solve from empty board, default)
+./benchmark.js -p 11            # Run 2 tests with 11 starting pieces (only 1 piece to solve, default)
+./benchmark.js --tests 10 --pieces 7  # Run 10 tests with 7 starting pieces
+```
+
 ## What Happens
 
 1. **Generates configurations** (fresh random configs each run)
-   - Creates N test cases with 3 pieces each
+   - Creates N test cases with configurable starting pieces (default: 3, range: 0-11)
    - Each piece has ≥2 atoms touching base (z=0)
    - No collisions, valid positions only
    - Ensures randomization across multiple benchmark runs

@@ -12,7 +12,8 @@ import * as path from 'path';
 
 // Parse command line arguments
 const args = process.argv.slice(2);
-let testCount = 20;
+let testCount = 2;
+let pieceCount = 3;
 let showHelp = false;
 let baseRef = 'origin/master';
 
@@ -21,6 +22,9 @@ for (let i = 0; i < args.length; i++) {
         showHelp = true;
     } else if (args[i] === '--tests' || args[i] === '-t') {
         testCount = parseInt(args[i + 1]);
+        i++;
+    } else if (args[i] === '--pieces' || args[i] === '-p') {
+        pieceCount = parseInt(args[i + 1]);
         i++;
     } else if (args[i] === '--base' || args[i] === '-b') {
         baseRef = args[i + 1];
@@ -39,16 +43,19 @@ Usage:
   ./benchmark.js [options] [testCount]
 
 Options:
-  --tests, -t <number>    Number of tests to run (1-20, default: 20)
+  --tests, -t <number>    Number of tests to run (1-20, default: 2)
+  --pieces, -p <number>   Number of starting pieces (0-11, default: 3)
   --base, -b <git-ref>    Base git ref to compare against (default: origin/master)
   --help, -h              Show this help message
 
 Examples:
-  node benchmark.js                      # Run all 20 tests (compare to origin/master)
-  node benchmark.js 10                   # Run first 10 tests (compare to origin/master)
-  node benchmark.js --tests 5            # Run first 5 tests (compare to origin/master)
-  node benchmark.js -b a1b2c3d           # Compare current branch to commit a1b2c3d with 20 tests
-  node benchmark.js --base v1.0.0 10     # Compare to tag v1.0.0 with 10 tests
+  node benchmark.js                      # Run all 2 tests with 3 starting pieces (compare to origin/master)
+  node benchmark.js 10                   # Run first 10 tests with 3 starting pieces (compare to origin/master)
+  node benchmark.js --tests 5            # Run first 5 tests with 3 starting pieces (compare to origin/master)
+  node benchmark.js --pieces 5           # Run 2 tests with 5 starting pieces (compare to origin/master)
+  node benchmark.js -p 0                 # Run 2 tests with 0 starting pieces (compare to origin/master)
+  node benchmark.js -b a1b2c3d           # Compare current branch to commit a1b2c3d with 2 tests, 3 pieces
+  node benchmark.js --base v1.0.0 10 --pieces 7  # Compare to tag v1.0.0 with 10 tests, 7 pieces
 
 This tool will:
   1. Generate test configurations (if needed)
@@ -66,10 +73,16 @@ if (testCount < 1 || testCount > 20) {
     process.exit(1);
 }
 
+// Validate piece count
+if (pieceCount < 0 || pieceCount > 11) {
+    console.error('Error: Starting piece count must be between 0 and 11');
+    process.exit(1);
+}
+
 console.log('='.repeat(70));
 console.log('KANOODLE-3D AUTOMATED PERFORMANCE BENCHMARK');
 console.log('='.repeat(70));
-console.log(`Running ${testCount} test case(s)`);
+console.log(`Running ${testCount} test case(s) with ${pieceCount} starting piece(s)`);
 console.log('='.repeat(70));
 console.log();
 
@@ -81,23 +94,23 @@ function countAtomsAtZ0(piece) {
     return piece.absolutePosition.filter(atom => atom.offset.z === 0).length;
 }
 
-function generateConfigurations(count) {
+function generateConfigurations(count, startingPieceCount) {
     const configs = [];
     const board = new Board();
     const maxAttempts = 10000;
 
-    console.log(`Generating ${count} benchmark configuration(s)...\n`);
+    console.log(`Generating ${count} benchmark configuration(s) with ${startingPieceCount} starting piece(s)...\n`);
 
     while (configs.length < count) {
         const caseIndex = configs.length + 1;
-        console.log(`Case ${caseIndex}/${count}: start (placing 3 pieces)`);
+        console.log(`Case ${caseIndex}/${count}: start (placing ${startingPieceCount} pieces)`);
         const caseStart = Date.now();
         board.resetBoard();
         const placedPieces = [];
         let validConfig = true;
 
-        for (let pieceNum = 0; pieceNum < 3; pieceNum++) {
-            console.log(`  Piece ${pieceNum + 1}/3: searching...`);
+        for (let pieceNum = 0; pieceNum < startingPieceCount; pieceNum++) {
+            console.log(`  Piece ${pieceNum + 1}/${startingPieceCount}: searching...`);
             const unusedColors = Array.isArray(board.getUnusedColors()) ? board.getUnusedColors() : [...board.getUnusedColors()];
             let placed = false;
             let attempts = 0;
@@ -156,10 +169,10 @@ function generateConfigurations(count) {
                 validConfig = false;
                 break;
             }
-            console.log(`  Piece ${pieceNum + 1}/3: placed (elapsed ${Date.now() - caseStart}ms)`);
+            console.log(`  Piece ${pieceNum + 1}/${startingPieceCount}: placed (elapsed ${Date.now() - caseStart}ms)`);
         }
 
-        if (validConfig && placedPieces.length === 3) {
+        if (validConfig && placedPieces.length === startingPieceCount) {
             configs.push({
                 id: configs.length + 1,
                 pieces: placedPieces
@@ -349,7 +362,7 @@ function gitCommand(cmd) {
 async function main() {
     try {
         // Step 1: Generate configurations
-        const configurations = generateConfigurations(testCount);
+        const configurations = generateConfigurations(testCount, pieceCount);
 
         // Step 2: Get current branch
         const currentBranch = gitCommand('git branch --show-current') || 'current';

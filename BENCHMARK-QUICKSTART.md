@@ -9,7 +9,7 @@ The easiest way to run the full benchmark:
 ```
 
 This will:
-1. Generate 20 test configurations (fresh random configs each run)
+1. Generate 2 test configurations with 3 starting pieces (fresh random configs each run, default)
 2. Run benchmark on your current branch
 3. Switch to origin/master and run the same tests
 4. Compare and display the results
@@ -53,11 +53,16 @@ node compare-results.js benchmark-results-optimized.json benchmark-results-origi
 
 ## What Gets Tested
 
-Each of the 20 test cases:
-- Starts with 3 pieces already placed on the board
+Each of the test cases (default: 2 tests, 3 starting pieces):
+- Starts with configurable number of pieces already placed on the board (default: 3, range: 0-11)
 - Each piece has at least 2 atoms touching the base (z=0)
 - No pieces are colliding
-- The `solve()` method fills in the remaining 9 pieces
+- The `solve()` method fills in the remaining pieces
+
+Use `--pieces` or `-p` to specify a different number of starting pieces:
+- `--pieces 0`: Solve from empty board (all 12 pieces)
+- `--pieces 3`: Default - solve remaining 9 pieces
+- `--pieces 11`: Solve remaining 1 piece
 
 ## Output
 

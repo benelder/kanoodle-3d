@@ -39,20 +39,30 @@ npm run benchmark:5
 npm run benchmark
 ```
 
+### Custom starting pieces
+```bash
+./benchmark.js --pieces 0      # Solve from empty board (all 12 pieces)
+./benchmark.js -p 5             # Start with 5 pieces (solve remaining 7)
+./benchmark.js --tests 10 -p 7  # 10 tests with 7 starting pieces
+```
+
 ## Command Line Options
 
 ```bash
-./benchmark.js               # Default: 20 tests
-./benchmark.js 10            # Run 10 tests
-./benchmark.js --tests 5     # Run 5 tests  
-./benchmark.js -t 3          # Run 3 tests
+./benchmark.js               # Default: 2 tests, 3 starting pieces
+./benchmark.js 10            # Run 10 tests, 3 starting pieces
+./benchmark.js --tests 5     # Run 5 tests, 3 starting pieces
+./benchmark.js -t 3          # Run 3 tests, 3 starting pieces
+./benchmark.js --pieces 5    # Run 2 tests with 5 starting pieces (default)
+./benchmark.js -p 0          # Run 2 tests with 0 starting pieces (default)
+./benchmark.js --tests 10 --pieces 7  # Run 10 tests with 7 starting pieces
 ./benchmark.js --help        # Show help
 ```
 
 ## What Happens
 
 1. **Generates configurations** (fresh random configs each run)
-   - Creates N test cases with 3 pieces each
+   - Creates N test cases with configurable starting pieces (default: 3, range: 0-11)
    - Each piece has ≥2 atoms touching base (z=0)
    - No collisions, valid positions only
    - Ensures randomization across multiple benchmark runs
