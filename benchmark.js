@@ -49,20 +49,50 @@ Options:
   --help, -h              Show this help message
 
 Examples:
-  node benchmark.js                      # Run all 2 tests with 3 starting pieces (compare to origin/master)
-  node benchmark.js 10                   # Run first 10 tests with 3 starting pieces (compare to origin/master)
-  node benchmark.js --tests 5            # Run first 5 tests with 3 starting pieces (compare to origin/master)
-  node benchmark.js --pieces 5           # Run 2 tests with 5 starting pieces (compare to origin/master)
-  node benchmark.js -p 0                 # Run 2 tests with 0 starting pieces (compare to origin/master)
-  node benchmark.js -b a1b2c3d           # Compare current branch to commit a1b2c3d with 2 tests, 3 pieces
-  node benchmark.js --base v1.0.0 10 --pieces 7  # Compare to tag v1.0.0 with 10 tests, 7 pieces
+  Basic Usage:
+  ./benchmark.js                      # Run with defaults: 2 tests, 3 starting pieces
+  ./benchmark.js 5                    # Run 5 tests with 3 starting pieces
+  ./benchmark.js --tests 10           # Run 10 tests with 3 starting pieces
+  ./benchmark.js -t 20                # Run all 20 tests with 3 starting pieces
 
-This tool will:
-  1. Generate test configurations (if needed)
-  2. Run benchmark on current branch
-  3. Switch to origin/master and run same tests
-  4. Compare results and show performance improvement
-  5. Return to original branch
+  Custom Starting Pieces:
+  ./benchmark.js --pieces 5           # Run 2 tests with 5 starting pieces (default)
+  ./benchmark.js -p 0                 # Run 2 tests with 0 starting pieces (solve from empty board)
+  ./benchmark.js -p 11                # Run 2 tests with 11 starting pieces (only 1 piece to solve)
+  ./benchmark.js --tests 10 --pieces 7 # Run 10 tests with 7 starting pieces
+
+  Compare to Specific Git Reference:
+  ./benchmark.js -b a1b2c3d           # Compare to commit a1b2c3d with 2 tests, 3 pieces
+  ./benchmark.js --base v1.0.0 10     # Compare to tag v1.0.0 with 10 tests, 3 pieces
+  ./benchmark.js --base master 5 -p 6 # Compare to master branch with 5 tests, 6 pieces
+
+What This Tool Does:
+  1. Generates fresh random test configurations
+     - Places configurable starting pieces (default: 3, range: 0-11)
+     - Each piece has ≥2 atoms touching base (z=0)
+     - No collisions, valid positions only
+  2. Runs benchmark on your current branch
+     - Executes solve() for each test
+     - Measures precise timing with performance.now()
+  3. Switches to base ref (default: origin/master)
+     - Stashes uncommitted changes if needed
+     - Checks out the base branch/commit
+  4. Runs same tests on base branch
+     - Uses identical configurations (apples-to-apples comparison)
+  5. Returns to your original branch
+     - Restores stashed changes
+  6. Compares and reports results
+     - Calculates speedup multiplier
+     - Shows per-test comparison
+     - Exports JSON report: benchmark-comparison-{timestamp}.json
+
+Output:
+  - Real-time progress during execution
+  - Detailed performance comparison report
+  - JSON file with complete results
+
+For more information, see:
+  - BENCHMARK-INSTRUCTIONS.md
 `);
     process.exit(0);
 }
