@@ -479,9 +479,6 @@ export class PieceRegistry {
                 validPositions: result.positions,
                 vposIndex: 0
             });
-
-            // Log position generation statistics (to stderr to avoid interfering with JSON output)
-            console.error(`Color ${key}: total=${result.totalGenerated}, invalid=${result.invalidCount}, duplicates=${result.duplicateCount}, valid=${result.validCount}`);
         }
     }
 
@@ -601,6 +598,20 @@ export class PieceRegistry {
      * First generates base positions "flat" on plane 0 (with and without lean), then "flips" each
      * base position to all 3 board faces (planes). This is more efficient than generating positions
      * for each plane separately.
+     * 
+     * Color A: total=1848, invalid=1176, duplicates=168, valid=336
+     * Color B: total=2064, invalid=1104, duplicates=240, valid=480
+     * Color C: total=1488, invalid=1248, duplicates=48, valid=96
+     * Color D: total=1848, invalid=1176, duplicates=168, valid=336
+     * Color E: total=1884, invalid=984, duplicates=180, valid=360
+     * Color F: total=1596, invalid=1176, duplicates=84, valid=168
+     * Color G: total=2064, invalid=1104, duplicates=240, valid=480
+     * Color H: total=1776, invalid=1056, duplicates=144, valid=288
+     * Color I: total=2064, invalid=1104, duplicates=240, valid=480
+     * Color J: total=1704, invalid=1104, duplicates=120, valid=240
+     * Color K: total=1704, invalid=864, duplicates=120, valid=240
+     * Color L: total=2424, invalid=984, duplicates=360, valid=720
+     * 
      * @param {Function} constr - Constructor function for the piece type
      * @returns {{positions: Array, totalGenerated: number, invalidCount: number, duplicateCount: number, validCount: number}} Object containing positions array and statistics
      * @private
