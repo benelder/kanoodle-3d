@@ -402,12 +402,15 @@ export class PieceRegistry {
      */
     #loadPossiblePositions() {
         for (let [key, value] of pieceHelper) {
-            const positions = this.#loadPositionsForColor(value.ctor);
+            const result = this.#loadPositionsForColor(value.ctor);
             this.colors.set(key, {
-                allPositions: positions,
-                validPositions: positions,
+                allPositions: result.positions,
+                validPositions: result.positions,
                 vposIndex: 0
-            })
+            });
+
+            // Log position generation statistics (to stderr to avoid interfering with JSON output)
+            console.error(`Color ${key}: total=${result.totalGenerated}, invalid=${result.invalidCount}, duplicates=${result.duplicateCount}, valid=${result.validCount}`);
         }
     }
 
@@ -416,12 +419,15 @@ export class PieceRegistry {
      * Enumerates all combinations of root positions, rotations, mirrors, leans, and planes,
      * then filters out duplicates using bitmask comparison.
      * @param {Function} constr - Constructor function for the piece type
-     * @returns {Array} Array of position objects with bitmask, cells, and transformation data
+     * @returns {{positions: Array, totalGenerated: number, invalidCount: number, duplicateCount: number, validCount: number}} Object containing positions array and statistics
      * @private
      */
     #loadPositionsForColor(constr) {
         const toRet = [];
         const seenMasks = new Set(); // Track bitmasks we've already seen - O(1) lookup
+        let totalGenerated = 0;
+        let invalidCount = 0;
+        let duplicateCount = 0;
 
         // Build base piece once to access node offsets and character
         const basePiece = constr();
@@ -457,6 +463,8 @@ export class PieceRegistry {
                     for (let p = 0; p < 3; p++) // for each plane
                     {
                         for (let oc = 0; oc < orientationCache.length; oc++) {
+                            totalGenerated++; // Count every position attempted before any filtering
+
                             const { rotation, lean, mirrorX, preOffsets } = orientationCache[oc];
 
                             // Build absolutePosition and bitmask with explicit bounds checks
@@ -477,6 +485,7 @@ export class PieceRegistry {
                             }
 
                             if (invalid) {
+                                invalidCount++;
                                 continue;
                             }
 
@@ -501,6 +510,8 @@ export class PieceRegistry {
                                     mirrorX: mirrorX,
                                     absolutePosition: abs
                                 });
+                            } else {
+                                duplicateCount++;
                             }
                         }
                     }
@@ -508,7 +519,14 @@ export class PieceRegistry {
             }
         }
 
-        return toRet;
+        const validCount = toRet.length;
+        return {
+            positions: toRet,
+            totalGenerated: totalGenerated,
+            invalidCount: invalidCount,
+            duplicateCount: duplicateCount,
+            validCount: validCount
+        };
     }
 
     /**
