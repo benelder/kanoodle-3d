@@ -397,6 +397,77 @@ export class PieceRegistry {
     }
 
     /**
+     * Validates that a transposed coordinate is within board bounds.
+     * @param {Location} transposed - The transposed location to validate
+     * @returns {boolean} True if the coordinate is valid, false otherwise
+     * @private
+     */
+    #isValidTransposed(transposed) {
+        return transposed.x >= 0 && transposed.y >= 0 && transposed.z >= 0 &&
+            (transposed.x + transposed.y + transposed.z) <= 5;
+    }
+
+    /**
+     * Calculates a bitmask from an array of coordinates on a given plane.
+     * @param {Location[]} coords - Array of pre-plane coordinates
+     * @param {number} plane - The plane to transpose to (0, 1, or 2)
+     * @returns {bigint} The bitmask representing the position
+     * @private
+     */
+    #calculateBitmask(coords, plane) {
+        let mask = 0n;
+        for (let i = 0; i < coords.length; i++) {
+            const t = transposeToPlane(plane, coords[i]);
+            if (!this.#isValidTransposed(t)) {
+                return null; // Invalid position
+            }
+            const bit = positionToBit(t.x, t.y, t.z);
+            mask |= (1n << bit);
+        }
+        return mask;
+    }
+
+    /**
+     * Transposes coordinates to a plane and creates atoms, validating as we go.
+     * @param {Location[]} prePlaneCoords - Array of pre-plane coordinates
+     * @param {number} plane - The plane to transpose to (0, 1, or 2)
+     * @returns {{atoms: Atom[], mask: bigint} | null} Object with atoms and bitmask, or null if invalid
+     * @private
+     */
+    #transposeAndBuildAtoms(prePlaneCoords, plane) {
+        const atoms = [];
+        let mask = 0n;
+
+        for (let i = 0; i < prePlaneCoords.length; i++) {
+            const origin = prePlaneCoords[i];
+            const t = transposeToPlane(plane, origin);
+            if (!this.#isValidTransposed(t)) {
+                return null; // Invalid position
+            }
+            atoms.push(new Atom(t.x, t.y, t.z));
+            const bit = positionToBit(t.x, t.y, t.z);
+            mask |= (1n << bit);
+        }
+
+        return { atoms, mask };
+    }
+
+    /**
+     * Builds the cells array from an array of atoms.
+     * @param {Atom[]} atoms - Array of atoms with their offset locations
+     * @returns {number[]} Array of cell indices
+     * @private
+     */
+    #buildCellsArray(atoms) {
+        const cells = [];
+        for (let i = 0; i < atoms.length; i++) {
+            const loc = atoms[i].offset;
+            cells.push(loc.x * 36 + loc.y * 6 + loc.z);
+        }
+        return cells;
+    }
+
+    /**
      * Loads all possible positions for each piece color from the piece helper map.
      * @private
      */
@@ -415,15 +486,126 @@ export class PieceRegistry {
     }
 
     /**
-     * Generates all unique valid positions for a given piece constructor.
-     * Enumerates all combinations of root positions, rotations, mirrors, leans, and planes,
-     * then filters out duplicates using bitmask comparison.
+     * Generates base positions on plane 0 for a given lean setting.
+     * @param {Location[]} baseNodes - The base node offsets for the piece
+     * @param {boolean} applyLeanTransform - Whether to apply lean transformation
+     * @param {Set} basePositionsSet - Set to track and deduplicate base positions by bitmask
+     * @returns {{basePositions: Array, totalGenerated: number, invalidCount: number}} Object containing base positions and statistics
+     * @private
+     */
+    #generateBasePositions(baseNodes, applyLeanTransform, basePositionsSet) {
+        const basePositions = [];
+        let totalGenerated = 0;
+        let invalidCount = 0;
+
+        for (let z = 0; z < 6; z++) {
+            for (let y = 0; y < 6; y++) {
+                for (let x = 0; x < 6; x++) {
+                    if (x + y + z > 5) continue;
+
+                    for (let rotation = 0; rotation < 6; rotation++) {
+                        for (let mirrorX of [false, true]) {
+                            totalGenerated++;
+
+                            // Build position: calculate pre-plane coordinates
+                            const prePlaneCoords = [];
+                            for (let i = 0; i < baseNodes.length; i++) {
+                                const start = applyMirrorX(baseNodes[i], mirrorX);
+                                const rot = rotateOffset(start, rotation);
+                                const transformed = applyLeanTransform ? applyLean(rot, true) : rot;
+                                const origin = new Location(x + transformed.x, y + transformed.y, z + transformed.z);
+                                prePlaneCoords.push(origin);
+                            }
+
+                            // Calculate mask for plane 0 to deduplicate base positions
+                            const mask = this.#calculateBitmask(prePlaneCoords, 0);
+                            if (mask === null) {
+                                invalidCount++;
+                                continue;
+                            }
+
+                            const maskStr = mask.toString();
+                            if (!basePositionsSet.has(maskStr)) {
+                                basePositionsSet.add(maskStr);
+                                basePositions.push({
+                                    prePlaneCoords: prePlaneCoords,
+                                    rootPosition: new Location(x, y, z),
+                                    rotation: rotation,
+                                    lean: applyLeanTransform,
+                                    mirrorX: mirrorX
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return { basePositions, totalGenerated, invalidCount };
+    }
+
+    /**
+     * Flips base positions to all 3 planes and deduplicates final positions.
+     * @param {Array} basePositions - Array of base position objects with pre-plane coordinates
+     * @param {string} character - The piece character identifier
+     * @param {Set} seenMasks - Set to track final positions by bitmask
+     * @returns {{positions: Array, totalGenerated: number, invalidCount: number, duplicateCount: number}} Object containing final positions and statistics
+     * @private
+     */
+    #flipBasePositionsToPlanes(basePositions, character, seenMasks) {
+        const positions = [];
+        let totalGenerated = 0;
+        let invalidCount = 0;
+        let duplicateCount = 0;
+
+        for (const basePos of basePositions) {
+            for (let plane = 0; plane < 3; plane++) {
+                totalGenerated++;
+
+                // Apply plane transpose to pre-plane coordinates
+                const result = this.#transposeAndBuildAtoms(basePos.prePlaneCoords, plane);
+                if (result === null) {
+                    invalidCount++;
+                    continue;
+                }
+
+                const { atoms: flippedAbs, mask } = result;
+                const maskStr = mask.toString();
+                if (!seenMasks.has(maskStr)) {
+                    seenMasks.add(maskStr);
+
+                    const cells = this.#buildCellsArray(flippedAbs);
+
+                    positions.push({
+                        bitmask: mask,
+                        cells: cells,
+                        character: character,
+                        rootPosition: basePos.rootPosition,
+                        rotation: basePos.rotation,
+                        plane: plane,
+                        lean: basePos.lean,
+                        mirrorX: basePos.mirrorX,
+                        absolutePosition: flippedAbs
+                    });
+                } else {
+                    duplicateCount++;
+                }
+            }
+        }
+
+        return { positions, totalGenerated, invalidCount, duplicateCount };
+    }
+
+    /**
+     * Generates all unique valid positions for a given piece constructor using the board-flip approach.
+     * First generates base positions "flat" on plane 0 (with and without lean), then "flips" each
+     * base position to all 3 board faces (planes). This is more efficient than generating positions
+     * for each plane separately.
      * @param {Function} constr - Constructor function for the piece type
      * @returns {{positions: Array, totalGenerated: number, invalidCount: number, duplicateCount: number, validCount: number}} Object containing positions array and statistics
      * @private
      */
     #loadPositionsForColor(constr) {
-        const toRet = [];
         const seenMasks = new Set(); // Track bitmasks we've already seen - O(1) lookup
         let totalGenerated = 0;
         let invalidCount = 0;
@@ -433,95 +615,30 @@ export class PieceRegistry {
         const basePiece = constr();
         const baseNodes = basePiece.nodes.map(n => n.offset);
 
-        // Precompute orientation-relative offsets (pre-transpose)
-        const orientationCache = [];
-        for (let r = 0; r < 6; r++) {
-            for (let lean of [false, true]) {
-                for (let mirrorX of [false, true]) {
-                    const preOffsets = [];
-                    for (let i = 0; i < baseNodes.length; i++) {
-                        const start = applyMirrorX(baseNodes[i], mirrorX);
-                        const rot = rotateOffset(start, r);
-                        const leaned = applyLean(rot, lean);
-                        preOffsets.push(leaned);
-                    }
-                    orientationCache.push({ rotation: r, lean: lean, mirrorX: mirrorX, preOffsets });
-                }
-            }
-        }
+        // Step 1: Generate base positions on plane 0 (flat and leaned separately)
+        const basePositionsSet = new Set(); // Deduplicate base positions on plane 0
 
-        // Enumerate roots and planes; translate precomputed offsets and then transpose
-        for (let z = 0; z < 6; z++) // for each root position
-        {
-            for (let y = 0; y < 6; y++) // for each root position
-            {
-                for (let x = 0; x < 6; x++) // for each root position
-                {
-                    if (x + y + z > 5) // will be out of bounds
-                        continue;
+        // Generate flat positions (no lean)
+        const flatResult = this.#generateBasePositions(baseNodes, false, basePositionsSet);
+        totalGenerated += flatResult.totalGenerated;
+        invalidCount += flatResult.invalidCount;
 
-                    for (let p = 0; p < 3; p++) // for each plane
-                    {
-                        for (let oc = 0; oc < orientationCache.length; oc++) {
-                            totalGenerated++; // Count every position attempted before any filtering
+        // Generate leaned positions (with lean)
+        const leanedResult = this.#generateBasePositions(baseNodes, true, basePositionsSet);
+        totalGenerated += leanedResult.totalGenerated;
+        invalidCount += leanedResult.invalidCount;
 
-                            const { rotation, lean, mirrorX, preOffsets } = orientationCache[oc];
+        const allBasePositions = [...flatResult.basePositions, ...leanedResult.basePositions];
 
-                            // Build absolutePosition and bitmask with explicit bounds checks
-                            const abs = [];
-                            let mask = 0n;
-                            let invalid = false;
-                            for (let i = 0; i < preOffsets.length; i++) {
-                                const origin = new Location(x + preOffsets[i].x, y + preOffsets[i].y, z + preOffsets[i].z);
-                                const t = transposeToPlane(p, origin);
-                                // Explicit coordinate validation to avoid negative or out-of-pyramid cells
-                                if (t.x < 0 || t.y < 0 || t.z < 0 || (t.x + t.y + t.z) > 5) {
-                                    invalid = true;
-                                    break;
-                                }
-                                abs.push(new Atom(t.x, t.y, t.z));
-                                const bit = positionToBit(t.x, t.y, t.z);
-                                mask |= (1n << bit);
-                            }
+        // Step 2: "Flip the board" - map each base position to all 3 planes
+        const flipResult = this.#flipBasePositionsToPlanes(allBasePositions, basePiece.character, seenMasks);
+        totalGenerated += flipResult.totalGenerated;
+        invalidCount += flipResult.invalidCount;
+        duplicateCount += flipResult.duplicateCount;
 
-                            if (invalid) {
-                                invalidCount++;
-                                continue;
-                            }
-
-                            if (!seenMasks.has(mask)) {
-                                seenMasks.add(mask);
-
-                                const cells = [];
-                                for (let ci = 0; ci < abs.length; ci++) {
-                                    const loc = abs[ci].offset;
-                                    cells.push(loc.x * 36 + loc.y * 6 + loc.z);
-                                }
-
-                                toRet.push({
-                                    bitmask: mask,
-                                    cells: cells,
-                                    character: basePiece.character,
-                                    // Preserve fields expected by benchmark/config tooling
-                                    rootPosition: new Location(x, y, z),
-                                    rotation: rotation,
-                                    plane: p,
-                                    lean: lean,
-                                    mirrorX: mirrorX,
-                                    absolutePosition: abs
-                                });
-                            } else {
-                                duplicateCount++;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        const validCount = toRet.length;
+        const validCount = flipResult.positions.length;
         return {
-            positions: toRet,
+            positions: flipResult.positions,
             totalGenerated: totalGenerated,
             invalidCount: invalidCount,
             duplicateCount: duplicateCount,
