@@ -278,6 +278,24 @@ function positionToBit(x, y, z) {
     return BigInt(x * 36 + y * 6 + z);
 }
 
+function positionUsesLocation(position, x, y, z) {
+    // Check if the position uses the specified location
+    // If x, y, or z is null, it means "All" was selected, so we only check non-null values
+    if (!position.absolutePosition) {
+        return false;
+    }
+    for (let i = 0; i < position.absolutePosition.length; i++) {
+        const atom = position.absolutePosition[i];
+        const matchesX = x === null || atom.offset.x === x;
+        const matchesY = y === null || atom.offset.y === y;
+        const matchesZ = z === null || atom.offset.z === z;
+        if (matchesX && matchesY && matchesZ) {
+            return true;
+        }
+    }
+    return false;
+}
+
 function drawEmptyCells() {
     // Clear existing empty cell meshes
     for (let i = 0; i < emptyCellMeshes.length; i++) {
@@ -367,7 +385,7 @@ function initiatePlacing(i) {
         const x = ddlX.value == "All" ? null : Number(ddlX.value);
         const y = ddlY.value == "All" ? null : Number(ddlY.value);
         const z = ddlZ.value == "All" ? null : Number(ddlZ.value);
-        positions = positions.filter(m => m.usesLocation(x, y, z));
+        positions = positions.filter(m => positionUsesLocation(m, x, y, z));
     }
 
     if (positions.length == 0) {
@@ -402,7 +420,7 @@ function placeNextPosition(i) {
         const x = ddlX.value == "All" ? null : Number(ddlX.value);
         const y = ddlY.value == "All" ? null : Number(ddlY.value);
         const z = ddlZ.value == "All" ? null : Number(ddlZ.value);
-        positions = positions.filter(m => m.usesLocation(x, y, z));
+        positions = positions.filter(m => positionUsesLocation(m, x, y, z));
     }
 
     color.vposIndex++;
@@ -430,7 +448,7 @@ function placePrevPosition(i) {
         const x = ddlX.value == "All" ? null : Number(ddlX.value);
         const y = ddlY.value == "All" ? null : Number(ddlY.value);
         const z = ddlZ.value == "All" ? null : Number(ddlZ.value);
-        positions = positions.filter(m => m.usesLocation(x, y, z));
+        positions = positions.filter(m => positionUsesLocation(m, x, y, z));
     }
 
     color.vposIndex--;
@@ -445,7 +463,8 @@ function placePrevPosition(i) {
 
 function updatePieceDetailsPanel(position) {
     const lblPieceName = document.getElementById('lblPieceName');
-    lblPieceName.innerText = "Name: " + position.name + '(' + position.character + ")";
+    const pieceName = position.name || position.character;
+    lblPieceName.innerText = "Name: " + pieceName + '(' + position.character + ")";
     const lblRootPosition = document.getElementById('lblRootPosition');
     lblRootPosition.innerText = "Root: [" + position.rootPosition.x + ", " + position.rootPosition.y + ", " + position.rootPosition.z + "]";
     const lblRotation = document.getElementById('lblRotation');
