@@ -902,7 +902,10 @@ export class Board {
                         rowStr += '   '; // Space between cells
                     }
                 }
-                console.log(rowStr);
+                if (rowStr.trim().length > 0) {
+                    console.log(rowStr);
+                    console.log(); // Empty line between layers
+                }
             }
         }
         console.log(''); // Empty line at end
