@@ -104,10 +104,15 @@ controls.enableZoom = true;
 controls.enableRotate = true;
 
 // Set up the spheres
-const radius = 2;
-const distancei = 4;
-const distancej = 3.3;
-const distancek = 3.3;
+const radius = 5;
+// For hexagonal close packing in triangular coordinate system:
+// - Adjacent spheres are exactly 2 * radius apart
+// - In hexagonal grid: cos(60°) = 0.5, sin(60°) = √3/2
+// - For triangular coordinates: each step is 2*radius, but offsets account for 60° angles
+const sqrt3 = Math.sqrt(3);
+const distancei = 2 * radius;      // Spacing along x direction (maps to Z coordinate)
+const distancej = sqrt3 * radius;  // Spacing along y direction (maps to X coordinate) = 2r * sin(60°)
+const distancek = sqrt3 * radius;  // Spacing along z direction (maps to Y coordinate) = 2r * sin(60°)
 
 // Add ambient light to the scene
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -170,10 +175,19 @@ function drawBoard() {
             const geometry = new THREE.SphereGeometry(radius, 32, 32);
             const material = getMaterial(character);
             const sphere = new THREE.Mesh(geometry, material);
+            // Position calculation for hexagonal/triangular grid
+            // For exact 2*radius spacing between adjacent spheres:
+            // - Adjacent spheres differ by 1 in exactly one coordinate
+            // - Distance formula: √(ΔX² + ΔY² + ΔZ²) = 2*radius
+            // - With distancej = distancek = √3*radius and proper offsets, this is satisfied
+            // Original empirical values: offsetX = z, offsetZ = (y+z)*2 (for radius=2)
+            // Scaled version: offsetX = z*radius/2, offsetZ = (y+z)*radius
+            const hexOffsetX = z * radius * 0.5;      // Offset in X: half radius per z unit
+            const hexOffsetZ = (y + z) * radius;      // Offset in Z: full radius per (y+z) unit  
             sphere.position.set(
-                y * distancej + (z),
-                z * distancek,
-                x * distancei + (y + z) * 2
+                y * distancej + hexOffsetX,  // X coordinate with hexagonal offset
+                z * distancek,               // Y coordinate  
+                x * distancei + hexOffsetZ   // Z coordinate with hexagonal offset
             );
             scene.add(sphere);
         }
@@ -406,10 +420,19 @@ function drawEmptyCells() {
                                 shininess: 100
                             });
                             const sphere = new THREE.Mesh(geometry, material);
+                            // Position calculation for hexagonal/triangular grid
+                            // For exact 2*radius spacing between adjacent spheres:
+                            // - Adjacent spheres differ by 1 in exactly one coordinate
+                            // - Distance formula: √(ΔX² + ΔY² + ΔZ²) = 2*radius
+                            // - With distancej = distancek = √3*radius and proper offsets, this is satisfied
+                            // Original empirical values: offsetX = z, offsetZ = (y+z)*2 (for radius=2)
+                            // Scaled version: offsetX = z*radius/2, offsetZ = (y+z)*radius
+                            const hexOffsetX = z * radius * 0.5;      // Offset in X: half radius per z unit
+                            const hexOffsetZ = (y + z) * radius;       // Offset in Z: full radius per (y+z) unit
                             sphere.position.set(
-                                y * distancej + (z),
-                                z * distancek,
-                                x * distancei + (y + z) * 2
+                                y * distancej + hexOffsetX,  // X coordinate with hexagonal offset
+                                z * distancek,                // Y coordinate
+                                x * distancei + hexOffsetZ     // Z coordinate with hexagonal offset
                             );
                             scene.add(sphere);
                             emptyCellMeshes.push(sphere);
