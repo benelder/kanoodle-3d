@@ -22,6 +22,20 @@ const ddlY = document.getElementById("ddlY");
 ddlY.addEventListener('change', () => filterChanged());
 const ddlZ = document.getElementById("ddlZ");
 ddlZ.addEventListener('change', () => filterChanged());
+const ddlRotation = document.getElementById("ddlRotation");
+ddlRotation.addEventListener('change', () => filterChanged());
+const ddlLean = document.getElementById("ddlLean");
+ddlLean.addEventListener('change', () => filterChanged());
+const ddlPlane = document.getElementById("ddlPlane");
+ddlPlane.addEventListener('change', () => filterChanged());
+const ddlMirrorX = document.getElementById("ddlMirrorX");
+ddlMirrorX.addEventListener('change', () => filterChanged());
+const ddlRootX = document.getElementById("ddlRootX");
+ddlRootX.addEventListener('change', () => filterChanged());
+const ddlRootY = document.getElementById("ddlRootY");
+ddlRootY.addEventListener('change', () => filterChanged());
+const ddlRootZ = document.getElementById("ddlRootZ");
+ddlRootZ.addEventListener('change', () => filterChanged());
 
 // add control panel
 for (let [key, value] of board.pieceRegistry.colors) {
@@ -212,6 +226,13 @@ function updateControlPanel() {
             ddlX.value = 'All';
             ddlY.value = 'All';
             ddlZ.value = 'All';
+            ddlRotation.value = 'All';
+            ddlLean.value = 'All';
+            ddlPlane.value = 'All';
+            ddlMirrorX.value = 'All';
+            ddlRootX.value = 'All';
+            ddlRootY.value = 'All';
+            ddlRootZ.value = 'All';
 
             if (board.piecesUsed.has(key)) {
                 btnAdd.style.display = 'none';
@@ -294,6 +315,58 @@ function positionUsesLocation(position, x, y, z) {
         }
     }
     return false;
+}
+
+function applyFilters(positions) {
+    // Apply location filters (X, Y, Z)
+    if (ddlX.value != "All" || ddlY.value != "All" || ddlZ.value != "All") {
+        const x = ddlX.value == "All" ? null : Number(ddlX.value);
+        const y = ddlY.value == "All" ? null : Number(ddlY.value);
+        const z = ddlZ.value == "All" ? null : Number(ddlZ.value);
+        positions = positions.filter(m => positionUsesLocation(m, x, y, z));
+    }
+
+    // Apply rotation filter
+    if (ddlRotation.value != "All") {
+        const rotation = Number(ddlRotation.value);
+        positions = positions.filter(m => m.rotation === rotation);
+    }
+
+    // Apply lean filter
+    if (ddlLean.value != "All") {
+        const lean = ddlLean.value === "true";
+        positions = positions.filter(m => m.lean === lean);
+    }
+
+    // Apply plane filter
+    if (ddlPlane.value != "All") {
+        const plane = Number(ddlPlane.value);
+        positions = positions.filter(m => m.plane === plane);
+    }
+
+    // Apply mirror X filter
+    if (ddlMirrorX.value != "All") {
+        const mirrorX = ddlMirrorX.value === "true";
+        positions = positions.filter(m => m.mirrorX === mirrorX);
+    }
+
+    // Apply root position filters
+    if (ddlRootX.value != "All") {
+        const rootX = Number(ddlRootX.value);
+        positions = positions.filter(m => m.rootPosition.x === rootX);
+    }
+
+    if (ddlRootY.value != "All") {
+        const rootY = Number(ddlRootY.value);
+        positions = positions.filter(m => m.rootPosition.y === rootY);
+    }
+
+    if (ddlRootZ.value != "All") {
+        const rootZ = Number(ddlRootZ.value);
+        positions = positions.filter(m => m.rootPosition.z === rootZ);
+    }
+
+    return positions;
 }
 
 function drawEmptyCells() {
@@ -381,12 +454,8 @@ function initiatePlacing(i) {
 
     let positions = color.validPositions;
 
-    if (ddlX.value != "All" || ddlY.value != "All" || ddlZ.value != "All") {
-        const x = ddlX.value == "All" ? null : Number(ddlX.value);
-        const y = ddlY.value == "All" ? null : Number(ddlY.value);
-        const z = ddlZ.value == "All" ? null : Number(ddlZ.value);
-        positions = positions.filter(m => positionUsesLocation(m, x, y, z));
-    }
+    // Apply all filters
+    positions = applyFilters(positions);
 
     if (positions.length == 0) {
         return false;
@@ -416,12 +485,8 @@ function placeNextPosition(i) {
 
     let positions = color.validPositions;
 
-    if (ddlX.value != "All" || ddlY.value != "All" || ddlZ.value != "All") {
-        const x = ddlX.value == "All" ? null : Number(ddlX.value);
-        const y = ddlY.value == "All" ? null : Number(ddlY.value);
-        const z = ddlZ.value == "All" ? null : Number(ddlZ.value);
-        positions = positions.filter(m => positionUsesLocation(m, x, y, z));
-    }
+    // Apply all filters
+    positions = applyFilters(positions);
 
     color.vposIndex++;
 
@@ -444,12 +509,8 @@ function placePrevPosition(i) {
 
     let positions = color.validPositions;
 
-    if (ddlX.value != "All" || ddlY.value != "All" || ddlZ.value != "All") {
-        const x = ddlX.value == "All" ? null : Number(ddlX.value);
-        const y = ddlY.value == "All" ? null : Number(ddlY.value);
-        const z = ddlZ.value == "All" ? null : Number(ddlZ.value);
-        positions = positions.filter(m => positionUsesLocation(m, x, y, z));
-    }
+    // Apply all filters
+    positions = applyFilters(positions);
 
     color.vposIndex--;
 
