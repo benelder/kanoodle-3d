@@ -249,9 +249,10 @@ function generateConfigurations(count, startingPieceCount) {
             console.log(`  Generated config ${configs.length}/${count} - Pieces: ${placedPieces.map(p => p.character).join(', ')} (elapsed ${Date.now() - caseStart}ms)`);
         }
         console.log(`Case ${caseIndex}/${count}: ${validConfig ? 'complete' : 'retrying'}\n`);
+        board.printBoard();
+        console.log();
     }
 
-    board.printBoard();
     return configs;
 }
 

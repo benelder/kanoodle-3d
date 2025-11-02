@@ -847,18 +847,18 @@ export class Board {
 
         // ANSI color codes for each piece
         const colorMap = {
-            'A': '\x1b[92m', // Lime (bright green)
-            'B': '\x1b[93m', // Yellow
-            'C': '\x1b[34m', // Dark Blue
-            'D': '\x1b[36m', // Light Blue (cyan)
-            'E': '\x1b[91m', // Red
-            'F': '\x1b[95m', // Pink (magenta)
-            'G': '\x1b[32m', // Green
+            'A': '\x1b[38;5;82m', // Lime (bright green)
+            'B': '\x1b[38;5;226m', // Yellow
+            'C': '\x1b[38;5;21m', // Dark Blue
+            'D': '\x1b[38;5;51m', // Light Blue (cyan)
+            'E': '\x1b[38;5;196m', // Red
+            'F': '\x1b[38;5;201m', // Pink (magenta)
+            'G': '\x1b[38;5;40m', // Green
             'H': '\x1b[97m', // White
-            'I': '\x1b[33m', // Orange (yellow/orange)
-            'J': '\x1b[38;5;216m', // Peach (light orange/red)
-            'K': '\x1b[90m', // Gray
-            'L': '\x1b[35m'  // Purple
+            'I': '\x1b[38;5;208m', // Orange (yellow/orange)
+            'J': '\x1b[38;5;218m', // Peach (light orange/red)
+            'K': '\x1b[38;5;247m', // Gray
+            'L': '\x1b[38;5;93m'  // Purple
         };
         const resetColor = '\x1b[0m';
 
@@ -868,7 +868,7 @@ export class Board {
             const rows = [];
 
             // Build rows for this z-layer
-            for (let y = 0; y <= maxSum; y++) {
+            for (let y = 5; y >= 0; y--) {
                 const cells = [];
                 for (let x = 0; x <= maxSum - y; x++) {
                     const key = `${x},${y},${z}`;
