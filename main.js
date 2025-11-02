@@ -4,12 +4,17 @@ import { Board } from './kanoodle.js'
 
 const board = new Board();
 let placingPiece = null;
+let showEmptyCells = false;
+let emptyCellMeshes = [];
 
 const btnSolve = document.getElementById("btnSolve");
 btnSolve.addEventListener('click', () => attemptSolve());
 
 const btnReset = document.getElementById("btnReset");
 btnReset.addEventListener('click', () => reset());
+
+const btnToggleEmptyCells = document.getElementById("btnToggleEmptyCells");
+btnToggleEmptyCells.addEventListener('click', () => toggleEmptyCells());
 
 const ddlX = document.getElementById("ddlX");
 ddlX.addEventListener('change', () => filterChanged());
@@ -153,6 +158,7 @@ function drawBoard() {
             scene.add(sphere);
         }
     }
+    drawEmptyCells();
     updateControlPanel();
 }
 
@@ -264,6 +270,60 @@ function clearBoard() {
             scene.remove(obj);
         }
     }
+    // Clear empty cell meshes array
+    emptyCellMeshes = [];
+}
+
+function positionToBit(x, y, z) {
+    return BigInt(x * 36 + y * 6 + z);
+}
+
+function drawEmptyCells() {
+    // Clear existing empty cell meshes
+    for (let i = 0; i < emptyCellMeshes.length; i++) {
+        scene.remove(emptyCellMeshes[i]);
+    }
+    emptyCellMeshes = [];
+
+    if (!showEmptyCells) {
+        return;
+    }
+
+    // Iterate through all valid board positions
+    for (let x = 0; x < 6; x++) {
+        for (let y = 0; y < 6; y++) {
+            for (let z = 0; z < 6; z++) {
+                // Check if position is valid (x + y + z <= 5)
+                if (x + y + z <= 5) {
+                    const bit = positionToBit(x, y, z);
+                    // Check if position is empty (not occupied)
+                    if ((board.occupancyMask & (1n << bit)) === 0n) {
+                        const geometry = new THREE.SphereGeometry(radius, 32, 32);
+                        const material = new THREE.MeshPhongMaterial({
+                            color: 0xffffff,
+                            transparent: true,
+                            opacity: 0.2,
+                            shininess: 100
+                        });
+                        const sphere = new THREE.Mesh(geometry, material);
+                        sphere.position.set(
+                            y * distancej + (z),
+                            z * distancek,
+                            x * distancei + (y + z) * 2
+                        );
+                        scene.add(sphere);
+                        emptyCellMeshes.push(sphere);
+                    }
+                }
+            }
+        }
+    }
+}
+
+function toggleEmptyCells() {
+    showEmptyCells = !showEmptyCells;
+    drawEmptyCells();
+    btnToggleEmptyCells.innerText = showEmptyCells ? 'Hide Empty Cells' : 'Show Empty Cells';
 }
 
 // Render the scene
