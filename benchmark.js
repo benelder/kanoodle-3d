@@ -251,6 +251,7 @@ function generateConfigurations(count, startingPieceCount) {
         console.log(`Case ${caseIndex}/${count}: ${validConfig ? 'complete' : 'retrying'}\n`);
     }
 
+    board.printBoard();
     return configs;
 }
 

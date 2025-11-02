@@ -826,6 +826,87 @@ export class Board {
 
         return false;
     }
+
+    /**
+     * Prints the board state to the console as a series of equilateral triangles representing each z-layer.
+     * Layers are printed from smallest (top of pyramid, z=0) to largest (base, z=5).
+     * Each cell shows the piece character, colored according to the piece color, or '-' if empty.
+     */
+    printBoard() {
+        // Build coordinate map: (x,y,z) -> character
+        const coordMap = new Map();
+        for (const piece of this.piecesUsed.values()) {
+            if (piece.absolutePosition) {
+                for (let i = 0; i < piece.absolutePosition.length; i++) {
+                    const atom = piece.absolutePosition[i];
+                    const key = `${atom.offset.x},${atom.offset.y},${atom.offset.z}`;
+                    coordMap.set(key, piece.character);
+                }
+            }
+        }
+
+        // ANSI color codes for each piece
+        const colorMap = {
+            'A': '\x1b[92m', // Lime (bright green)
+            'B': '\x1b[93m', // Yellow
+            'C': '\x1b[34m', // Dark Blue
+            'D': '\x1b[36m', // Light Blue (cyan)
+            'E': '\x1b[91m', // Red
+            'F': '\x1b[95m', // Pink (magenta)
+            'G': '\x1b[32m', // Green
+            'H': '\x1b[97m', // White
+            'I': '\x1b[33m', // Orange (yellow/orange)
+            'J': '\x1b[38;5;216m', // Peach (light orange/red)
+            'K': '\x1b[90m', // Gray
+            'L': '\x1b[35m'  // Purple
+        };
+        const resetColor = '\x1b[0m';
+
+        // Print each z-layer from smallest (z=0) to largest (z=5)
+        for (let z = 5; z >= 0; z--) {
+            const maxSum = 5 - z; // Maximum x+y for this z-layer
+            const rows = [];
+
+            // Build rows for this z-layer
+            for (let y = 0; y <= maxSum; y++) {
+                const cells = [];
+                for (let x = 0; x <= maxSum - y; x++) {
+                    const key = `${x},${y},${z}`;
+                    const char = coordMap.get(key) || '-';
+
+                    if (char !== '-') {
+                        const color = colorMap[char] || '';
+                        cells.push(color + char + resetColor);
+                    } else {
+                        cells.push(char);
+                    }
+                }
+                rows.push(cells);
+            }
+
+            // Print layer header
+            console.log(`\nLayer z=${z}:`);
+
+            // Print rows centered as equilateral triangle
+            for (let i = 0; i < rows.length; i++) {
+                const cells = rows[i];
+                const maxWidth = rows.length; // Width of base row
+                const currentWidth = cells.length;
+                const indent = maxWidth - currentWidth;
+
+                // Build the row with proper spacing
+                let rowStr = '  '.repeat(indent);
+                for (let j = 0; j < cells.length; j++) {
+                    rowStr += cells[j];
+                    if (j < cells.length - 1) {
+                        rowStr += '   '; // Space between cells
+                    }
+                }
+                console.log(rowStr);
+            }
+        }
+        console.log(''); // Empty line at end
+    }
 }
 
 
