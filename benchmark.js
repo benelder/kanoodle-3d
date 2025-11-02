@@ -256,30 +256,6 @@ function generateConfigurations(count, startingPieceCount) {
     return configs;
 }
 
-function setupBoard(board, config) {
-    board.resetBoard();
-
-    for (const pieceConfig of config.pieces) {
-        const colorData = board.pieceRegistry.colors.get(pieceConfig.character);
-
-        const piece = colorData.allPositions.find(p =>
-            p.rootPosition.x === pieceConfig.rootPosition.x &&
-            p.rootPosition.y === pieceConfig.rootPosition.y &&
-            p.rootPosition.z === pieceConfig.rootPosition.z &&
-            p.rotation === pieceConfig.rotation &&
-            p.plane === pieceConfig.plane &&
-            p.lean === pieceConfig.lean &&
-            p.mirrorX === pieceConfig.mirrorX
-        );
-
-        if (!piece) {
-            throw new Error(`Could not find piece matching config: ${JSON.stringify(pieceConfig)}`);
-        }
-
-        board.placePiece(piece);
-    }
-}
-
 function compareResults(optimized, original) {
     const repeatCount = 73;
     console.log();
