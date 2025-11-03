@@ -146,6 +146,13 @@ function drawBoard() {
     // Iterate over placed pieces and draw their positions
     for (const piece of board.piecesUsed.values()) {
         const material = getMaterial(piece.character);
+
+        // Ensure absolutePosition exists
+        if (!piece.absolutePosition || piece.absolutePosition.length === 0) {
+            console.warn(`Piece ${piece.character} has no absolutePosition`);
+            continue;
+        }
+
         // Draw all atoms/spheres for this piece
         for (const atom of piece.absolutePosition) {
             const sphere = createSphere(material, atom.offset.x, atom.offset.y, atom.offset.z);
@@ -299,10 +306,12 @@ function getPositionDistance(pos1, pos2) {
 // Check if two positions are adjacent (neighbors in the hexagonal close packing)
 function arePositionsAdjacent(pos1, pos2) {
     // In hexagonal close packing, adjacent atoms are 2 * SPHERE_RADIUS apart
-    // Allow a small tolerance for floating point comparison
+    // Allow a tolerance for floating point comparison and transformations
     const expectedDistance = 2 * SPHERE_RADIUS;
     const actualDistance = getPositionDistance(pos1, pos2);
-    const tolerance = 0.5; // Small tolerance for floating point precision
+    // Increased tolerance to account for floating point precision and transformations
+    // (plane transpose, rotations, etc. can cause small variations)
+    const tolerance = 1.0; // Increased from 0.5 to account for transformation precision
     return Math.abs(actualDistance - expectedDistance) < tolerance;
 }
 
