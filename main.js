@@ -16,12 +16,16 @@ let placingPiece = null;
 let showEmptyCells = false;
 let emptyCellMeshes = [];
 let emptyCellOpacity = 0.2;
+let manualStateSnapshot = null; // Stores manually-placed pieces state
 
 const btnSolve = document.getElementById("btnSolve");
 btnSolve.addEventListener('click', () => attemptSolve());
 
 const btnReset = document.getElementById("btnReset");
 btnReset.addEventListener('click', () => reset());
+
+const btnResetToManual = document.getElementById("btnResetToManual");
+btnResetToManual.addEventListener('click', () => resetToManualState());
 
 const btnToggleEmptyCells = document.getElementById("btnToggleEmptyCells");
 btnToggleEmptyCells.addEventListener('click', () => toggleEmptyCells());
@@ -163,6 +167,8 @@ function updateControlPanel() {
 
     const btnReset = document.getElementById('btnReset');
     btnReset.style.display = 'inline';
+
+    updateResetToManualButton();
 
     const filters = document.getElementById('filters');
     filters.style.display = 'none';
@@ -405,6 +411,8 @@ function removePiece(char) {
     board.removePiece(usedPiece);
     color.vposIndex = 0;
     placingPiece = null;
+    // Update snapshot after removing a piece (in case it was manually placed)
+    captureManualStateSnapshot();
     drawBoard();
 }
 
@@ -412,6 +420,7 @@ function setPiece(char) {
     const color = board.pieceRegistry.colors.get(char);
     color.vposIndex = 0;
     placingPiece = null;
+    captureManualStateSnapshot();
     drawBoard();
 }
 
@@ -524,8 +533,104 @@ function attemptSolve() {
 
 function reset() {
     board.resetBoard();
+    manualStateSnapshot = null;
+    updateResetToManualButton();
     drawBoard();
 }
 
+function captureManualStateSnapshot() {
+    // Only capture snapshot if there are pieces on the board
+    if (board.piecesUsed.size === 0) {
+        manualStateSnapshot = null;
+        updateResetToManualButton();
+        return;
+    }
+
+    // Deep clone the piecesUsed Map
+    const clonedPiecesUsed = new Map();
+    for (const [key, piece] of board.piecesUsed.entries()) {
+        // Clone the piece object and its properties
+        clonedPiecesUsed.set(key, {
+            character: piece.character,
+            rootPosition: {
+                x: piece.rootPosition.x,
+                y: piece.rootPosition.y,
+                z: piece.rootPosition.z
+            },
+            rotation: piece.rotation,
+            plane: piece.plane,
+            lean: piece.lean,
+            mirrorX: piece.mirrorX,
+            bitmask: piece.bitmask,
+            absolutePosition: piece.absolutePosition.map(atom => ({
+                offset: {
+                    x: atom.offset.x,
+                    y: atom.offset.y,
+                    z: atom.offset.z
+                }
+            }))
+        });
+    }
+
+    manualStateSnapshot = {
+        piecesUsed: clonedPiecesUsed,
+        occupancyMask: board.occupancyMask
+    };
+    updateResetToManualButton();
+}
+
+function restoreManualStateSnapshot() {
+    if (!manualStateSnapshot) {
+        return false;
+    }
+
+    // Clear the board
+    board.resetBoard();
+
+    // Restore pieces from snapshot - we need to find the matching piece objects from the registry
+    for (const [char, snapshotPiece] of manualStateSnapshot.piecesUsed.entries()) {
+        const color = board.pieceRegistry.colors.get(char);
+        if (!color) continue;
+
+        // Find the matching piece in allPositions by comparing key properties
+        let matchingPiece = null;
+        for (const pos of color.allPositions) {
+            if (pos.character === snapshotPiece.character &&
+                pos.rootPosition.x === snapshotPiece.rootPosition.x &&
+                pos.rootPosition.y === snapshotPiece.rootPosition.y &&
+                pos.rootPosition.z === snapshotPiece.rootPosition.z &&
+                pos.rotation === snapshotPiece.rotation &&
+                pos.plane === snapshotPiece.plane &&
+                pos.lean === snapshotPiece.lean &&
+                pos.mirrorX === snapshotPiece.mirrorX &&
+                pos.bitmask === snapshotPiece.bitmask) {
+                matchingPiece = pos;
+                break;
+            }
+        }
+
+        if (matchingPiece) {
+            board.placePiece(matchingPiece);
+        }
+    }
+
+    drawBoard();
+    return true;
+}
+
+function resetToManualState() {
+    if (restoreManualStateSnapshot()) {
+        console.log("Restored to manually-placed pieces state");
+    }
+}
+
+function updateResetToManualButton() {
+    const btnResetToManual = document.getElementById('btnResetToManual');
+    if (btnResetToManual) {
+        btnResetToManual.disabled = manualStateSnapshot === null;
+    }
+}
+
 drawBoard();
+updateResetToManualButton();
 render();
