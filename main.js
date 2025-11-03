@@ -1,12 +1,20 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'OrbitControls'
 import { Board } from './kanoodle.js'
+import {
+    createScene,
+    createOrthographicCamera,
+    updateCameraOnResize,
+    getMaterial,
+    createSphere,
+    arePositionsAdjacent,
+    createConnector,
+    MATERIAL_SHININESS
+} from './renderer-utils.js';
 
 // Constants
 const BOARD_SIZE = 6;
 const BOARD_MAX_SUM = 5;
-const SPHERE_RADIUS = 5;
-const MATERIAL_SHININESS = 100;
 const POSITION_MULTIPLIER_X = 36;
 const POSITION_MULTIPLIER_Y = 6;
 
@@ -86,14 +94,12 @@ function createButton(name, key, className, clickHandler) {
 }
 
 // Set up the scene
-const scene = new THREE.Scene();
+const scene = createScene();
 const renderer = new THREE.WebGLRenderer();
 const mainPanel = document.querySelector('#main-panel');
 
-// Set up the camera
-const ZOOM_FACTOR = 6;
-const camera = new THREE.OrthographicCamera(window.innerWidth / - ZOOM_FACTOR, window.innerWidth / ZOOM_FACTOR, window.innerHeight / ZOOM_FACTOR, window.innerHeight / - ZOOM_FACTOR, -500, 100);
-camera.position.set(1, 1, 1);
+// Set up the camera (using default near/far for solver)
+const camera = createOrthographicCamera(-500, 100);
 // Set up the renderer
 renderer.setSize(window.innerWidth, window.innerHeight);
 
@@ -105,41 +111,9 @@ controls.enablePan = true;
 controls.enableZoom = true;
 controls.enableRotate = true;
 
-// Set up the spheres
-// For hexagonal close packing in triangular coordinate system:
-// - Adjacent spheres are exactly 2 * radius apart
-// - In hexagonal grid: cos(60°) = 0.5, sin(60°) = √3/2
-// - For triangular coordinates: each step is 2*radius, but offsets account for 60° angles
-const sqrt3 = Math.sqrt(3);
-const distancei = 2 * SPHERE_RADIUS;      // Spacing along x direction (maps to Z coordinate)
-const distancej = sqrt3 * SPHERE_RADIUS;  // Spacing along y direction (maps to X coordinate) = 2r * sin(60°)
-const distancek = sqrt3 * SPHERE_RADIUS;  // Spacing along z direction (maps to Y coordinate) = 2r * sin(60°)
-
-// Add ambient light to the scene
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-scene.add(ambientLight);
-
-const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-dirLight.position.set(10, 20, 0); // x, y, z
-scene.add(dirLight);
-
 // Create an AxesHelper
 //scene.add(new THREE.GridHelper(80, 20));
 scene.add(new THREE.AxesHelper(50));
-
-function getMaterial(val) {
-    const colorMap = {
-        'A': 0x7bc149, 'B': 0xdbd11a, 'C': 0x301adb, 'D': 0x1acbdb,
-        'E': 0xd60a18, 'F': 0xd60a7a, 'G': 0x074c06, 'H': 0xededed,
-        'I': 0xe25300, 'J': 0xeda1b8, 'K': 0x9b9b9b, 'L': 0x7c26ff
-    };
-    const color = colorMap[val] || 0xDDDDDD;
-    return new THREE.MeshPhongMaterial({
-        color,
-        shininess: colorMap[val] ? MATERIAL_SHININESS : undefined,
-        flatShading: true  // Enable flat shading to make faces more distinct
-    });
-}
 
 function drawBoard() {
     clearBoard();
@@ -272,83 +246,6 @@ function positionToBit(x, y, z) {
     return BigInt(x * POSITION_MULTIPLIER_X + y * POSITION_MULTIPLIER_Y + z);
 }
 
-// Convert board coordinates (x, y, z) to 3D scene position
-function boardToScenePosition(x, y, z) {
-    const hexOffsetX = z * SPHERE_RADIUS * 0.5;      // Offset in X: half radius per z unit
-    const hexOffsetZ = (y + z) * SPHERE_RADIUS;      // Offset in Z: full radius per (y+z) unit
-    return {
-        x: y * distancej + hexOffsetX,
-        y: z * distancek,
-        z: x * distancei + hexOffsetZ
-    };
-}
-
-// Create a polygonal/faceted sphere with specified material
-// Using IcosahedronGeometry which has 20 triangular faces for a faceted look
-function createSphere(material, x, y, z) {
-    const geometry = new THREE.IcosahedronGeometry(SPHERE_RADIUS, 1);
-    const sphere = new THREE.Mesh(geometry, material);
-    const pos = boardToScenePosition(x, y, z);
-    sphere.position.set(pos.x, pos.y, pos.z);
-    return sphere;
-}
-
-// Calculate the 3D distance between two positions in scene coordinates
-function getPositionDistance(pos1, pos2) {
-    const scenePos1 = boardToScenePosition(pos1.x, pos1.y, pos1.z);
-    const scenePos2 = boardToScenePosition(pos2.x, pos2.y, pos2.z);
-    const dx = scenePos1.x - scenePos2.x;
-    const dy = scenePos1.y - scenePos2.y;
-    const dz = scenePos1.z - scenePos2.z;
-    return Math.sqrt(dx * dx + dy * dy + dz * dz);
-}
-
-// Check if two positions are adjacent (neighbors in the hexagonal close packing)
-function arePositionsAdjacent(pos1, pos2) {
-    // In hexagonal close packing, adjacent atoms are 2 * SPHERE_RADIUS apart
-    // Allow a tolerance for floating point comparison and transformations
-    const expectedDistance = 2 * SPHERE_RADIUS;
-    const actualDistance = getPositionDistance(pos1, pos2);
-    // Increased tolerance to account for floating point precision and transformations
-    // (plane transpose, rotations, etc. can cause small variations)
-    const tolerance = 1.0; // Increased from 0.5 to account for transformation precision
-    return Math.abs(actualDistance - expectedDistance) < tolerance;
-}
-
-// Create a connector cylinder between two adjacent positions
-function createConnector(material, pos1, pos2) {
-    const scenePos1 = boardToScenePosition(pos1.x, pos1.y, pos1.z);
-    const scenePos2 = boardToScenePosition(pos2.x, pos2.y, pos2.z);
-
-    // Calculate distance and direction
-    const dx = scenePos2.x - scenePos1.x;
-    const dy = scenePos2.y - scenePos1.y;
-    const dz = scenePos2.z - scenePos1.z;
-    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-    // Connector radius is 20% of sphere diameter = 0.2 * 2 * SPHERE_RADIUS
-    const connectorRadius = 0.2 * 2 * SPHERE_RADIUS;
-
-    // Create cylinder geometry
-    const geometry = new THREE.CylinderGeometry(connectorRadius, connectorRadius, distance, 8);
-    const cylinder = new THREE.Mesh(geometry, material);
-
-    // Position cylinder at midpoint between positions
-    const midX = (scenePos1.x + scenePos2.x) / 2;
-    const midY = (scenePos1.y + scenePos2.y) / 2;
-    const midZ = (scenePos1.z + scenePos2.z) / 2;
-    cylinder.position.set(midX, midY, midZ);
-
-    // Rotate cylinder to align with the direction between positions
-    // The cylinder's default orientation is along Y-axis, so we need to rotate it
-    const direction = new THREE.Vector3(dx, dy, dz).normalize();
-    const up = new THREE.Vector3(0, 1, 0);
-    const quaternion = new THREE.Quaternion();
-    quaternion.setFromUnitVectors(up, direction);
-    cylinder.quaternion.copy(quaternion);
-
-    return cylinder;
-}
 
 function positionUsesLocation(position, x, y, z) {
     // Check if the position uses the specified location
