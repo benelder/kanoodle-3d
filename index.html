@@ -2,7 +2,7 @@
 <html>
 
 <head>
-  <title>Kanoodle Solver - 3D</title>
+  <title>Kanoodle Shapes - 3D</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link rel="icon" href="data:,">
 
@@ -13,105 +13,33 @@
       margin: 0;
       padding: 0;
       background-color: #f0f0f0;
+      overflow: hidden;
     }
 
-    h2 {
-      margin-bottom: 5px;
-    }
-
-    .panel {
+    .header {
       position: fixed;
-      background-color: #ccc;
-      color: #000000;
-      padding: 10px;
+      top: 10px;
+      left: 10px;
+      z-index: 1000;
+      background-color: rgba(204, 204, 204, 0.9);
+      padding: 10px 15px;
+      border-radius: 5px;
       border: 1px solid #ddd;
     }
 
-    .color-container.place-mode {
-      display: none;
+    .header h2 {
+      margin: 0 0 10px 0;
+      font-size: 1.5em;
     }
 
-    .color-label {
-      margin-right: 8px;
-      width: 60px;
-      text-align: right;
+    .header a {
+      color: #0066cc;
+      text-decoration: none;
+      font-weight: bold;
     }
 
-    /* Desktop layout */
-    @media (min-width: 768px) {
-      .panel {
-        width: 25%;
-        height: 100%;
-        left: 0;
-        top: 0;
-      }
-
-      .color-container.select-mode {
-        display: block;
-      }
-    }
-
-    /* Mobile layout */
-    @media (max-width: 767px) {
-      .panel {
-        width: 100%;
-        height: 30%;
-        left: 0;
-        bottom: 0;
-        overflow-y: auto;
-        overflow-x: hidden;
-      }
-
-      .color-container.select-mode {
-        display: inline;
-      }
-
-      button {
-        margin-right: 4px !important;
-      }
-
-      #btnSolve.btn-lg,
-      #btnReset.btn-lg,
-      #btnResetToManual.btn-lg,
-      #btnToggleEmptyCells.btn-lg {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.875rem;
-        line-height: 1.5;
-        border-radius: 0.25rem;
-      }
-    }
-
-    @media screen and (max-width: 767px) {
-
-      _::-webkit-full-page-media,
-      _:future,
-      :root .panel {
-        height: 40%;
-        overflow-y: auto;
-        overflow-x: hidden;
-      }
-    }
-
-    .color-container {
-      margin-bottom: 4px;
-    }
-
-    .top-level-controls {
-      margin-bottom: 10px;
-      margin-top: 10px;
-    }
-
-    button {
-      margin-right: 5px;
-      padding: 2px 4px;
-      min-width: 50px;
-      margin-bottom: 4px;
-    }
-
-    .detail-label {
-      display: block;
-      font-size: .85em;
-      font-family: 'Courier New', Courier, monospace;
+    .header a:hover {
+      text-decoration: underline;
     }
 
     canvas {
@@ -123,174 +51,13 @@
 </head>
 
 <body>
-  <div class="panel">
-    <h2>Kanoodle Solver 3D</h2>
-    <div id="controlPanel">
-
-      <div id="colorControls"></div>
-      <div class="top-level-controls">
-        <button disabled="true" class="btn btn-secondary btn-lg" id="btnSolve" style="float:left">Solve</button>
-        <label id="lblNoSolution" style="font-weight: bold; color: #CC0000; display: none;">* No solution found*</label>
-        <button id="btnReset" class="btn btn-secondary btn-lg" style="float:right">Reset</button>
-        <button id="btnResetToManual" class="btn btn-secondary btn-lg" style="float:right; margin-right: 5px;"
-          disabled>Restore</button>
-        <button id="btnToggleEmptyCells" class="btn btn-secondary btn-lg" style="float:right; margin-right: 5px;">
-          Empty Cells On</button>
-        <div style="clear: both; margin-top: 10px; margin-bottom: 10px;">
-          <label for="sliderEmptyCellOpacity" style="display: inline-block; margin-right: 10px;">Empty Cell
-            Opacity:</label>
-          <input type="range" id="sliderEmptyCellOpacity" min="0" max="0.5" step="0.01" value="0.2"
-            style="width: 150px; display: inline-block;">
-          <span id="lblEmptyCellOpacity" style="margin-left: 10px;">0.2</span>
-        </div>
-      </div>
-      <div id="filters" style="display:none">
-        <div style="float:right; margin-right:5px; padding: 4px; border: solid 1px #aaaaaa; background-color: #efefef;">
-          <label id="lblPieceName" class="detail-label"></label>
-          <label id="lblPieceChar" class="detail-label"></label>
-          <label id="lblRootPosition" class="detail-label"></label>
-          <label id="lblRotation" class="detail-label"></label>
-          <label id="lblLean" class="detail-label"></label>
-          <label id="lblTranspose" class="detail-label"></label>
-          <label id="lblMirror" class="detail-label"></label>
-        </div>
-
-        <div style="margin-bottom: 10px;">
-          <h4>Absolute Position</h4>
-          <div style="margin-bottom: 7px;">
-            <label for="ddlX">X:</label>
-            <select name="ddlX" id="ddlX">
-              <option value="All">All</option>
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-            </select>
-          </div>
-
-          <div style="margin-bottom: 7px;">
-            <label for="ddlY">Y:</label>
-            <select name="ddlY" id="ddlY">
-              <option value="All">All</option>
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-            </select>
-          </div>
-
-          <div style="margin-bottom: 7px;">
-            <label for="ddlZ">Z:</label>
-            <select name="ddlZ" id="ddlZ">
-              <option value="All">All</option>
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-            </select>
-          </div>
-        </div>
-
-        <div style="margin-bottom: 10px;">
-          <h4>Root Position</h4>
-
-          <div style="margin-bottom: 7px;">
-            <label for="ddlRootX">Root X:</label>
-            <select name="ddlRootX" id="ddlRootX">
-              <option value="All">All</option>
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-            </select>
-          </div>
-
-          <div style="margin-bottom: 7px;">
-            <label for="ddlRootY">Root Y:</label>
-            <select name="ddlRootY" id="ddlRootY">
-              <option value="All">All</option>
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-            </select>
-          </div>
-
-          <div style="margin-bottom: 7px;">
-            <label for="ddlRootZ">Root Z:</label>
-            <select name="ddlRootZ" id="ddlRootZ">
-              <option value="All">All</option>
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-            </select>
-          </div>
-        </div>
-
-        <div style="margin-bottom: 10px;">
-          <h4>Transpose Filters</h4>
-
-          <div style="margin-bottom: 7px;">
-            <label for="ddlRotation">Rotation:</label>
-            <select name="ddlRotation" id="ddlRotation">
-              <option value="All">All</option>
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-            </select>
-          </div>
-
-
-          <div style="margin-bottom: 7px;">
-            <label for="ddlLean">Lean:</label>
-            <select name="ddlLean" id="ddlLean">
-              <option value="All">All</option>
-              <option value="false">False</option>
-              <option value="true">True</option>
-            </select>
-          </div>
-
-          <div style="margin-bottom: 7px;">
-            <label for="ddlPlane">Plane:</label>
-            <select name="ddlPlane" id="ddlPlane">
-              <option value="All">All</option>
-              <option value="0">0</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-            </select>
-          </div>
-
-          <div style="margin-bottom: 7px;">
-            <label for="ddlMirrorX">Mirror X:</label>
-            <select name="ddlMirrorX" id="ddlMirrorX">
-              <option value="All">All</option>
-              <option value="false">False</option>
-              <option value="true">True</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </div>
+  <div class="header">
+    <h2>Kanoodle Shapes 3D</h2>
+    <a href="solver.html">Go to Solver &rarr;</a>
   </div>
-  <div id="main-panel">
 
-  </div>
+  <div id="main-panel"></div>
+
   <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
 
   <script type="importmap">
@@ -303,8 +70,7 @@
       }
     </script>
 
-  <script type="module" src="kanoodle.js"></script>
-  <script type="module" src="main.js"></script>
+  <script type="module" src="shapes.js"></script>
 </body>
 
 </html>
