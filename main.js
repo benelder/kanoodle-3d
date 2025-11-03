@@ -2,6 +2,15 @@ import * as THREE from 'three';
 import { OrbitControls } from 'OrbitControls'
 import { Board } from './kanoodle.js'
 
+// Constants
+const BOARD_SIZE = 6;
+const BOARD_MAX_SUM = 5;
+const SPHERE_RADIUS = 5;
+const SPHERE_SEGMENTS = 32;
+const MATERIAL_SHININESS = 100;
+const POSITION_MULTIPLIER_X = 36;
+const POSITION_MULTIPLIER_Y = 6;
+
 const board = new Board();
 let placingPiece = null;
 let showEmptyCells = false;
@@ -22,31 +31,21 @@ const lblEmptyCellOpacity = document.getElementById("lblEmptyCellOpacity");
 lblEmptyCellOpacity.innerText = emptyCellOpacity.toFixed(2);
 sliderEmptyCellOpacity.addEventListener('input', () => updateEmptyCellOpacity());
 
-const ddlX = document.getElementById("ddlX");
-ddlX.addEventListener('change', () => filterChanged());
-const ddlY = document.getElementById("ddlY");
-ddlY.addEventListener('change', () => filterChanged());
-const ddlZ = document.getElementById("ddlZ");
-ddlZ.addEventListener('change', () => filterChanged());
-const ddlRotation = document.getElementById("ddlRotation");
-ddlRotation.addEventListener('change', () => filterChanged());
-const ddlLean = document.getElementById("ddlLean");
-ddlLean.addEventListener('change', () => filterChanged());
-const ddlPlane = document.getElementById("ddlPlane");
-ddlPlane.addEventListener('change', () => filterChanged());
-const ddlMirrorX = document.getElementById("ddlMirrorX");
-ddlMirrorX.addEventListener('change', () => filterChanged());
-const ddlRootX = document.getElementById("ddlRootX");
-ddlRootX.addEventListener('change', () => filterChanged());
-const ddlRootY = document.getElementById("ddlRootY");
-ddlRootY.addEventListener('change', () => filterChanged());
-const ddlRootZ = document.getElementById("ddlRootZ");
-ddlRootZ.addEventListener('change', () => filterChanged());
+// Initialize filter dropdowns
+const filterDropdowns = [
+    'ddlX', 'ddlY', 'ddlZ', 'ddlRotation', 'ddlLean',
+    'ddlPlane', 'ddlMirrorX', 'ddlRootX', 'ddlRootY', 'ddlRootZ'
+];
+const filterControls = {};
+filterDropdowns.forEach(id => {
+    filterControls[id] = document.getElementById(id);
+    filterControls[id].addEventListener('change', () => filterChanged());
+});
+const { ddlX, ddlY, ddlZ, ddlRotation, ddlLean, ddlPlane, ddlMirrorX, ddlRootX, ddlRootY, ddlRootZ } = filterControls;
 
 // add control panel
+const colorControls = document.getElementById("colorControls");
 for (let [key, value] of board.pieceRegistry.colors) {
-    const controlPanel = document.getElementById("controlPanel");
-
     const colorContainer = document.createElement('div');
     colorContainer.id = 'colorContainer' + key;
     colorContainer.className = 'color-container';
@@ -58,7 +57,7 @@ for (let [key, value] of board.pieceRegistry.colors) {
     if (board.piecesUsed.has(key)) {
         lbl.innerText = key;
     } else {
-        lbl.innerText = key + '(' + board.pieceRegistry.colors.get(key).validPositions.length + ')';
+        lbl.innerText = key + '(' + value.validPositions.length + ')';
     }
 
     colorContainer.appendChild(lbl);
@@ -69,8 +68,7 @@ for (let [key, value] of board.pieceRegistry.colors) {
     colorContainer.appendChild(createButton('Set', key, 'btn-success', () => setPiece(key)));
     colorContainer.appendChild(createButton('Next', key, 'btn-primary', () => placeNextPosition(key)));
 
-
-    controlPanel.appendChild(colorContainer);
+    colorControls.appendChild(colorContainer);
 }
 
 function createButton(name, key, className, clickHandler) {
@@ -104,15 +102,14 @@ controls.enableZoom = true;
 controls.enableRotate = true;
 
 // Set up the spheres
-const radius = 5;
 // For hexagonal close packing in triangular coordinate system:
 // - Adjacent spheres are exactly 2 * radius apart
 // - In hexagonal grid: cos(60°) = 0.5, sin(60°) = √3/2
 // - For triangular coordinates: each step is 2*radius, but offsets account for 60° angles
 const sqrt3 = Math.sqrt(3);
-const distancei = 2 * radius;      // Spacing along x direction (maps to Z coordinate)
-const distancej = sqrt3 * radius;  // Spacing along y direction (maps to X coordinate) = 2r * sin(60°)
-const distancek = sqrt3 * radius;  // Spacing along z direction (maps to Y coordinate) = 2r * sin(60°)
+const distancei = 2 * SPHERE_RADIUS;      // Spacing along x direction (maps to Z coordinate)
+const distancej = sqrt3 * SPHERE_RADIUS;  // Spacing along y direction (maps to X coordinate) = 2r * sin(60°)
+const distancek = sqrt3 * SPHERE_RADIUS;  // Spacing along z direction (maps to Y coordinate) = 2r * sin(60°)
 
 // Add ambient light to the scene
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
@@ -127,68 +124,25 @@ scene.add(dirLight);
 scene.add(new THREE.AxesHelper(50));
 
 function getMaterial(val) {
-    const s = 100;
-
-    switch (val) {
-        case 'A':
-            return new THREE.MeshPhongMaterial({ color: 0x7bc149, shininess: s });
-        case 'B':
-            return new THREE.MeshPhongMaterial({ color: 0xdbd11a, shininess: s });
-        case 'C':
-            return new THREE.MeshPhongMaterial({ color: 0x301adb, shininess: s });
-        case 'D':
-            return new THREE.MeshPhongMaterial({ color: 0x1acbdb, shininess: s });
-        case 'E':
-            return new THREE.MeshPhongMaterial({ color: 0xd60a18, shininess: s });
-        case 'F':
-            return new THREE.MeshPhongMaterial({ color: 0xd60a7a, shininess: s });
-        case 'G':
-            return new THREE.MeshPhongMaterial({ color: 0x074c06, shininess: s });
-        case 'H':
-            return new THREE.MeshPhongMaterial({ color: 0xededed, shininess: s });
-        case 'I':
-            return new THREE.MeshPhongMaterial({ color: 0xe25300, shininess: s });
-        case 'J':
-            return new THREE.MeshPhongMaterial({ color: 0xeda1b8, shininess: s });
-        case 'K':
-            return new THREE.MeshPhongMaterial({ color: 0x9b9b9b, shininess: s });
-        case 'L':
-            return new THREE.MeshPhongMaterial({ color: 0x7c26ff, shininess: s });
-        default:
-            return new THREE.MeshPhongMaterial({ color: 0xDDDDDD });
-    }
+    const colorMap = {
+        'A': 0x7bc149, 'B': 0xdbd11a, 'C': 0x301adb, 'D': 0x1acbdb,
+        'E': 0xd60a18, 'F': 0xd60a7a, 'G': 0x074c06, 'H': 0xededed,
+        'I': 0xe25300, 'J': 0xeda1b8, 'K': 0x9b9b9b, 'L': 0x7c26ff
+    };
+    const color = colorMap[val] || 0xDDDDDD;
+    return new THREE.MeshPhongMaterial({
+        color,
+        shininess: colorMap[val] ? MATERIAL_SHININESS : undefined
+    });
 }
 
 function drawBoard() {
     clearBoard();
     // Iterate over placed pieces and draw their positions
     for (const piece of board.piecesUsed.values()) {
-        const character = piece.character;
-        const absolutePositions = piece.absolutePosition;
-
-        for (let i = 0; i < absolutePositions.length; i++) {
-            const atom = absolutePositions[i];
-            const x = atom.offset.x;
-            const y = atom.offset.y;
-            const z = atom.offset.z;
-
-            const geometry = new THREE.SphereGeometry(radius, 32, 32);
-            const material = getMaterial(character);
-            const sphere = new THREE.Mesh(geometry, material);
-            // Position calculation for hexagonal/triangular grid
-            // For exact 2*radius spacing between adjacent spheres:
-            // - Adjacent spheres differ by 1 in exactly one coordinate
-            // - Distance formula: √(ΔX² + ΔY² + ΔZ²) = 2*radius
-            // - With distancej = distancek = √3*radius and proper offsets, this is satisfied
-            // Original empirical values: offsetX = z, offsetZ = (y+z)*2 (for radius=2)
-            // Scaled version: offsetX = z*radius/2, offsetZ = (y+z)*radius
-            const hexOffsetX = z * radius * 0.5;      // Offset in X: half radius per z unit
-            const hexOffsetZ = (y + z) * radius;      // Offset in Z: full radius per (y+z) unit  
-            sphere.position.set(
-                y * distancej + hexOffsetX,  // X coordinate with hexagonal offset
-                z * distancek,               // Y coordinate  
-                x * distancei + hexOffsetZ   // Z coordinate with hexagonal offset
-            );
+        const material = getMaterial(piece.character);
+        for (const atom of piece.absolutePosition) {
+            const sphere = createSphere(material, atom.offset.x, atom.offset.y, atom.offset.z);
             scene.add(sphere);
         }
     }
@@ -196,8 +150,13 @@ function drawBoard() {
     updateControlPanel();
 }
 
-function updateControlPanel() {
+function resetAllFilters() {
+    filterDropdowns.forEach(id => {
+        filterControls[id].value = 'All';
+    });
+}
 
+function updateControlPanel() {
     const btnSolve = document.getElementById('btnSolve');
     btnSolve.disabled = board.piecesUsed.size < 3;
     btnSolve.style.display = 'inline';
@@ -211,112 +170,100 @@ function updateControlPanel() {
     const lblNoSolution = document.getElementById('lblNoSolution');
     lblNoSolution.style.display = 'none';
 
-
     for (let [key, value] of board.pieceRegistry.colors) {
-
-        // reset some controls
         const colorContainer = document.getElementById('colorContainer' + key);
+        const btnAdd = document.getElementById('btnAdd' + key);
+        const lbl = document.getElementById('lbl' + key);
+
+        // Reset controls
         colorContainer.classList.add('select-mode');
         colorContainer.classList.remove('place-mode');
-        const btnAdd = document.getElementById('btnAdd' + key);
         btnAdd.disabled = false;
 
-
-        // are we in placing mode?
+        // Are we in placing mode?
         if (placingPiece != null) {
             btnReset.style.display = 'none';
             btnSolve.style.display = 'none';
             filters.style.display = 'block';
 
             if (key !== placingPiece) {
-                // disable all controls for pieces we are not actively placing
-                const colorContainer = document.getElementById('colorContainer' + key);
                 colorContainer.classList.remove('select-mode');
                 colorContainer.classList.add('place-mode');
-            }
-            else {
-                // actively placing, hide add button
+            } else {
                 btnAdd.style.display = 'none';
-                // show next, prev, remove, set buttons
                 showPlacingButtons(key);
             }
-        }
-        else {
-            // in piece select mode
-            ddlX.value = 'All';
-            ddlY.value = 'All';
-            ddlZ.value = 'All';
-            ddlRotation.value = 'All';
-            ddlLean.value = 'All';
-            ddlPlane.value = 'All';
-            ddlMirrorX.value = 'All';
-            ddlRootX.value = 'All';
-            ddlRootY.value = 'All';
-            ddlRootZ.value = 'All';
+        } else {
+            // In piece select mode
+            resetAllFilters();
 
             if (board.piecesUsed.has(key)) {
                 btnAdd.style.display = 'none';
-                const btnNext = document.getElementById('btnNext' + key);
-                btnNext.style.display = 'none';
-                const btnPrev = document.getElementById('btnPrev' + key);
-                btnPrev.style.display = 'none';
+                hidePlacingButtons(key);
                 const btnCut = document.getElementById('btnCut' + key);
                 btnCut.style.display = 'inline';
-                const btnSet = document.getElementById('btnSet' + key);
-                btnSet.style.display = 'none';
-                const lbl = document.getElementById('lbl' + key);
                 lbl.innerText = key + ' (---)';
             } else {
                 btnAdd.style.display = 'inline';
-
-                if (value.validPositions.length == 0) {
-                    btnAdd.disabled = true;
-                }
-
+                btnAdd.disabled = value.validPositions.length === 0;
                 hidePlacingButtons(key);
-
-                const lbl = document.getElementById('lbl' + key);
-                lbl.innerText = key + '(' + board.pieceRegistry.colors.get(key).validPositions.length + ')';
+                lbl.innerText = key + '(' + value.validPositions.length + ')';
             }
         }
     }
 }
 
+function setButtonVisibility(key, visible) {
+    const display = visible ? 'inline' : 'none';
+    ['Next', 'Prev', 'Cut', 'Set'].forEach(name => {
+        const btn = document.getElementById('btn' + name + key);
+        if (btn) btn.style.display = display;
+    });
+}
+
 function showPlacingButtons(key) {
-    const btnNext = document.getElementById('btnNext' + key);
-    btnNext.style.display = 'inline';
-    const btnPrev = document.getElementById('btnPrev' + key);
-    btnPrev.style.display = 'inline';
-    const btnCut = document.getElementById('btnCut' + key);
-    btnCut.style.display = 'inline';
-    const btnSet = document.getElementById('btnSet' + key);
-    btnSet.style.display = 'inline';
+    setButtonVisibility(key, true);
 }
 
 function hidePlacingButtons(key) {
-    const btnNext = document.getElementById('btnNext' + key);
-    btnNext.style.display = 'none';
-    const btnPrev = document.getElementById('btnPrev' + key);
-    btnPrev.style.display = 'none';
-    const btnCut = document.getElementById('btnCut' + key);
-    btnCut.style.display = 'none';
-    const btnSet = document.getElementById('btnSet' + key);
-    btnSet.style.display = 'none';
+    setButtonVisibility(key, false);
 }
 
 function clearBoard() {
-    for (var i = scene.children.length - 1; i >= 0; i--) {
-        let obj = scene.children[i];
-        if (scene.children[i].type === 'Mesh') {
-            scene.remove(obj);
+    // Remove all mesh objects from the scene
+    const meshesToRemove = [];
+    scene.children.forEach(child => {
+        if (child.type === 'Mesh') {
+            meshesToRemove.push(child);
         }
-    }
+    });
+    meshesToRemove.forEach(mesh => scene.remove(mesh));
     // Clear empty cell meshes array
     emptyCellMeshes = [];
 }
 
 function positionToBit(x, y, z) {
-    return BigInt(x * 36 + y * 6 + z);
+    return BigInt(x * POSITION_MULTIPLIER_X + y * POSITION_MULTIPLIER_Y + z);
+}
+
+// Convert board coordinates (x, y, z) to 3D scene position
+function boardToScenePosition(x, y, z) {
+    const hexOffsetX = z * SPHERE_RADIUS * 0.5;      // Offset in X: half radius per z unit
+    const hexOffsetZ = (y + z) * SPHERE_RADIUS;      // Offset in Z: full radius per (y+z) unit
+    return {
+        x: y * distancej + hexOffsetX,
+        y: z * distancek,
+        z: x * distancei + hexOffsetZ
+    };
+}
+
+// Create a sphere with specified material
+function createSphere(material, x, y, z) {
+    const geometry = new THREE.SphereGeometry(SPHERE_RADIUS, SPHERE_SEGMENTS, SPHERE_SEGMENTS);
+    const sphere = new THREE.Mesh(geometry, material);
+    const pos = boardToScenePosition(x, y, z);
+    sphere.position.set(pos.x, pos.y, pos.z);
+    return sphere;
 }
 
 function positionUsesLocation(position, x, y, z) {
@@ -339,101 +286,82 @@ function positionUsesLocation(position, x, y, z) {
 
 function applyFilters(positions) {
     // Apply location filters (X, Y, Z)
-    if (ddlX.value != "All" || ddlY.value != "All" || ddlZ.value != "All") {
-        const x = ddlX.value == "All" ? null : Number(ddlX.value);
-        const y = ddlY.value == "All" ? null : Number(ddlY.value);
-        const z = ddlZ.value == "All" ? null : Number(ddlZ.value);
+    if (ddlX.value !== "All" || ddlY.value !== "All" || ddlZ.value !== "All") {
+        const x = ddlX.value === "All" ? null : Number(ddlX.value);
+        const y = ddlY.value === "All" ? null : Number(ddlY.value);
+        const z = ddlZ.value === "All" ? null : Number(ddlZ.value);
         positions = positions.filter(m => positionUsesLocation(m, x, y, z));
     }
 
-    // Apply rotation filter
-    if (ddlRotation.value != "All") {
-        const rotation = Number(ddlRotation.value);
-        positions = positions.filter(m => m.rotation === rotation);
-    }
+    // Apply numeric filters
+    const numericFilters = [
+        { dropdown: ddlRotation, field: 'rotation' },
+        { dropdown: ddlPlane, field: 'plane' }
+    ];
+    numericFilters.forEach(({ dropdown, field }) => {
+        if (dropdown.value !== "All") {
+            const value = Number(dropdown.value);
+            positions = positions.filter(m => m[field] === value);
+        }
+    });
 
-    // Apply lean filter
-    if (ddlLean.value != "All") {
-        const lean = ddlLean.value === "true";
-        positions = positions.filter(m => m.lean === lean);
-    }
-
-    // Apply plane filter
-    if (ddlPlane.value != "All") {
-        const plane = Number(ddlPlane.value);
-        positions = positions.filter(m => m.plane === plane);
-    }
-
-    // Apply mirror X filter
-    if (ddlMirrorX.value != "All") {
-        const mirrorX = ddlMirrorX.value === "true";
-        positions = positions.filter(m => m.mirrorX === mirrorX);
-    }
+    // Apply boolean filters
+    const booleanFilters = [
+        { dropdown: ddlLean, field: 'lean' },
+        { dropdown: ddlMirrorX, field: 'mirrorX' }
+    ];
+    booleanFilters.forEach(({ dropdown, field }) => {
+        if (dropdown.value !== "All") {
+            const value = dropdown.value === "true";
+            positions = positions.filter(m => m[field] === value);
+        }
+    });
 
     // Apply root position filters
-    if (ddlRootX.value != "All") {
-        const rootX = Number(ddlRootX.value);
-        positions = positions.filter(m => m.rootPosition.x === rootX);
-    }
-
-    if (ddlRootY.value != "All") {
-        const rootY = Number(ddlRootY.value);
-        positions = positions.filter(m => m.rootPosition.y === rootY);
-    }
-
-    if (ddlRootZ.value != "All") {
-        const rootZ = Number(ddlRootZ.value);
-        positions = positions.filter(m => m.rootPosition.z === rootZ);
-    }
+    const rootFilters = [
+        { dropdown: ddlRootX, field: 'rootPosition', subField: 'x' },
+        { dropdown: ddlRootY, field: 'rootPosition', subField: 'y' },
+        { dropdown: ddlRootZ, field: 'rootPosition', subField: 'z' }
+    ];
+    rootFilters.forEach(({ dropdown, field, subField }) => {
+        if (dropdown.value !== "All") {
+            const value = Number(dropdown.value);
+            positions = positions.filter(m => m[field][subField] === value);
+        }
+    });
 
     return positions;
 }
 
 function drawEmptyCells() {
     // Clear existing empty cell meshes
-    for (let i = 0; i < emptyCellMeshes.length; i++) {
-        scene.remove(emptyCellMeshes[i]);
-    }
+    emptyCellMeshes.forEach(mesh => scene.remove(mesh));
     emptyCellMeshes = [];
 
     if (!showEmptyCells) {
         return;
     }
 
+    const emptyCellMaterial = new THREE.MeshPhongMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: emptyCellOpacity,
+        shininess: MATERIAL_SHININESS
+    });
+
     // Iterate through all valid board positions
-    for (let x = 0; x < 6; x++) {
-        for (let y = 0; y < 6; y++) {
-            for (let z = 0; z < 6; z++) {
+    for (let x = 0; x < BOARD_SIZE; x++) {
+        for (let y = 0; y < BOARD_SIZE; y++) {
+            for (let z = 0; z < BOARD_SIZE; z++) {
                 // Check if position is valid (x + y + z <= 5)
-                if (x + y + z <= 5) {
+                if (x + y + z <= BOARD_MAX_SUM) {
                     // Only show empty cells on outside faces of the prism
-                    const isOnOutsideFace = x === 0 || y === 0 || z === 0 || (x + y + z === 5);
+                    const isOnOutsideFace = x === 0 || y === 0 || z === 0 || (x + y + z === BOARD_MAX_SUM);
                     if (isOnOutsideFace) {
                         const bit = positionToBit(x, y, z);
                         // Check if position is empty (not occupied)
                         if ((board.occupancyMask & (1n << bit)) === 0n) {
-                            const geometry = new THREE.SphereGeometry(radius, 32, 32);
-                            const material = new THREE.MeshPhongMaterial({
-                                color: 0xffffff,
-                                transparent: true,
-                                opacity: emptyCellOpacity,
-                                shininess: 100
-                            });
-                            const sphere = new THREE.Mesh(geometry, material);
-                            // Position calculation for hexagonal/triangular grid
-                            // For exact 2*radius spacing between adjacent spheres:
-                            // - Adjacent spheres differ by 1 in exactly one coordinate
-                            // - Distance formula: √(ΔX² + ΔY² + ΔZ²) = 2*radius
-                            // - With distancej = distancek = √3*radius and proper offsets, this is satisfied
-                            // Original empirical values: offsetX = z, offsetZ = (y+z)*2 (for radius=2)
-                            // Scaled version: offsetX = z*radius/2, offsetZ = (y+z)*radius
-                            const hexOffsetX = z * radius * 0.5;      // Offset in X: half radius per z unit
-                            const hexOffsetZ = (y + z) * radius;       // Offset in Z: full radius per (y+z) unit
-                            sphere.position.set(
-                                y * distancej + hexOffsetX,  // X coordinate with hexagonal offset
-                                z * distancek,                // Y coordinate
-                                x * distancei + hexOffsetZ     // Z coordinate with hexagonal offset
-                            );
+                            const sphere = createSphere(emptyCellMaterial, x, y, z);
                             scene.add(sphere);
                             emptyCellMeshes.push(sphere);
                         }
@@ -455,9 +383,9 @@ function updateEmptyCellOpacity() {
     lblEmptyCellOpacity.innerText = emptyCellOpacity.toFixed(2);
 
     // Update opacity of existing empty cell meshes
-    for (let i = 0; i < emptyCellMeshes.length; i++) {
-        emptyCellMeshes[i].material.opacity = emptyCellOpacity;
-    }
+    emptyCellMeshes.forEach(mesh => {
+        mesh.material.opacity = emptyCellOpacity;
+    });
 }
 
 // Render the scene
@@ -518,7 +446,7 @@ function initiatePlacing(i) {
     return true;
 }
 
-function placeNextPosition(i) {
+function navigatePosition(i, direction) {
     const usedPiece = board.piecesUsed.get(i);
     const color = board.pieceRegistry.colors.get(i);
 
@@ -526,15 +454,12 @@ function placeNextPosition(i) {
         board.removePiece(usedPiece);
     }
 
-    let positions = color.validPositions;
+    let positions = applyFilters(color.validPositions);
 
-    // Apply all filters
-    positions = applyFilters(positions);
-
-    color.vposIndex++;
-
-    if (color.vposIndex >= positions.length) {
-        color.vposIndex = 0;
+    if (direction === 'next') {
+        color.vposIndex = (color.vposIndex + 1) % positions.length;
+    } else {
+        color.vposIndex = (color.vposIndex - 1 + positions.length) % positions.length;
     }
 
     board.placePiece(positions[color.vposIndex]);
@@ -542,27 +467,12 @@ function placeNextPosition(i) {
     drawBoard();
 }
 
+function placeNextPosition(i) {
+    navigatePosition(i, 'next');
+}
+
 function placePrevPosition(i) {
-    const usedPiece = board.piecesUsed.get(i);
-    const color = board.pieceRegistry.colors.get(i);
-
-    if (usedPiece !== undefined) {
-        board.removePiece(usedPiece);
-    }
-
-    let positions = color.validPositions;
-
-    // Apply all filters
-    positions = applyFilters(positions);
-
-    color.vposIndex--;
-
-    if (color.vposIndex < 0) {
-        color.vposIndex = positions.length - 1;
-    }
-    board.placePiece(positions[color.vposIndex]);
-    updatePieceDetailsPanel(positions[color.vposIndex]);
-    drawBoard();
+    navigatePosition(i, 'prev');
 }
 
 function updatePieceDetailsPanel(position) {
