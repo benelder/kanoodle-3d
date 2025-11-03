@@ -7,7 +7,6 @@ import {
 
 // Constants
 const SPHERE_RADIUS = 5;
-const SPHERE_SEGMENTS = 32;
 const MATERIAL_SHININESS = 100;
 
 // Set up the scene
@@ -61,7 +60,8 @@ function getMaterial(val) {
     const color = colorMap[val] || 0xDDDDDD;
     return new THREE.MeshPhongMaterial({
         color,
-        shininess: colorMap[val] ? MATERIAL_SHININESS : undefined
+        shininess: colorMap[val] ? MATERIAL_SHININESS : undefined,
+        flatShading: true  // Enable flat shading to make faces more distinct
     });
 }
 
@@ -76,9 +76,10 @@ function boardToScenePosition(x, y, z) {
     };
 }
 
-// Create a sphere with specified material
+// Create a polygonal/faceted sphere with specified material
+// Using IcosahedronGeometry which has 20 triangular faces for a faceted look
 function createSphere(material, x, y, z, offsetX = 0, offsetY = 0, offsetZ = 0) {
-    const geometry = new THREE.SphereGeometry(SPHERE_RADIUS, SPHERE_SEGMENTS, SPHERE_SEGMENTS);
+    const geometry = new THREE.IcosahedronGeometry(SPHERE_RADIUS, 1);
     const sphere = new THREE.Mesh(geometry, material);
     const pos = boardToScenePosition(x, y, z);
     sphere.position.set(pos.x + offsetX, pos.y + offsetY, pos.z + offsetZ);
