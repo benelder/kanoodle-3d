@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'OrbitControls'
 import { Board } from './kanoodle.js'
+import { CSG } from 'three-csg-ts';
 import {
     createScene,
     createOrthographicCamera,
@@ -9,7 +10,9 @@ import {
     createSphere,
     arePositionsAdjacent,
     createConnector,
-    MATERIAL_SHININESS
+    MATERIAL_SHININESS,
+    SPHERE_RADIUS,
+    boardToScenePosition
 } from './renderer-utils.js';
 
 // Constants
@@ -24,6 +27,7 @@ let showEmptyCells = false;
 let emptyCellMeshes = [];
 let emptyCellOpacity = 0.2;
 let manualStateSnapshot = null; // Stores manually-placed pieces state
+let boardMesh = null; // Reference to the board mesh
 
 const btnSolve = document.getElementById("btnSolve");
 btnSolve.addEventListener('click', () => attemptSolve());
@@ -95,7 +99,10 @@ function createButton(name, key, className, clickHandler) {
 
 // Set up the scene
 const scene = createScene();
-const renderer = new THREE.WebGLRenderer();
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setClearColor(0x1a1a1a, 1); // Dark gray background for better visibility
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.2; // Slightly brighter exposure
 const mainPanel = document.querySelector('#main-panel');
 
 // Set up the camera (using default near/far for solver)
@@ -111,12 +118,16 @@ controls.enablePan = true;
 controls.enableZoom = true;
 controls.enableRotate = true;
 
-// Create an AxesHelper
-//scene.add(new THREE.GridHelper(80, 20));
-scene.add(new THREE.AxesHelper(50));
+
 
 function drawBoard() {
     clearBoard();
+
+    // Create or update the board
+    if (!boardMesh) {
+        createBoard();
+    }
+
     // Iterate over placed pieces and draw their positions
     for (const piece of board.piecesUsed.values()) {
         const material = getMaterial(piece.character);
@@ -230,16 +241,137 @@ function hidePlacingButtons(key) {
 }
 
 function clearBoard() {
-    // Remove all mesh objects from the scene
+    // Remove all mesh objects from the scene (except the board)
     const meshesToRemove = [];
     scene.children.forEach(child => {
-        if (child.type === 'Mesh') {
+        if (child.type === 'Mesh' && child !== boardMesh) {
             meshesToRemove.push(child);
         }
     });
     meshesToRemove.forEach(mesh => scene.remove(mesh));
     // Clear empty cell meshes array
     emptyCellMeshes = [];
+}
+
+/**
+ * Calculates the bounds of the pyramid in scene coordinates
+ * by iterating through all valid pyramid positions
+ */
+function calculatePyramidBounds() {
+    let minX = Infinity, maxX = -Infinity;
+    let minZ = Infinity, maxZ = -Infinity;
+
+    // Iterate through all valid pyramid positions (x+y+z <= 5, x,y,z >= 0)
+    for (let x = 0; x < 6; x++) {
+        for (let y = 0; y < 6; y++) {
+            for (let z = 0; z < 6; z++) {
+                if (x + y + z <= 5) {
+                    const pos = boardToScenePosition(x, y, z);
+                    minX = Math.min(minX, pos.x);
+                    maxX = Math.max(maxX, pos.x);
+                    minZ = Math.min(minZ, pos.z);
+                    maxZ = Math.max(maxZ, pos.z);
+                }
+            }
+        }
+    }
+
+    return { minX, maxX, minZ, maxZ };
+}
+
+/**
+ * Creates the board with recessed seats for the base layer (z=0)
+ */
+function createBoard() {
+    // Remove existing board if present
+    if (boardMesh) {
+        scene.remove(boardMesh);
+        boardMesh.geometry.dispose();
+        boardMesh.material.dispose();
+        boardMesh = null;
+    }
+
+    // Calculate pyramid bounds
+    const bounds = calculatePyramidBounds();
+    const centerX = (bounds.minX + bounds.maxX) / 2;
+    const centerZ = (bounds.minZ + bounds.maxZ) / 2;
+
+
+    const boardRadius = SPHERE_RADIUS * 8;
+    const boardDepth = 1.5 * SPHERE_RADIUS;
+    const seatDepth = 0.3 * SPHERE_RADIUS; // 15% of radius
+
+    // Create base board geometry (cylinder)
+    const boardGeometry = new THREE.CylinderGeometry(boardRadius, boardRadius, boardDepth, 64);
+    const boardMaterial = new THREE.MeshPhongMaterial({
+        color: 0x202020, // Dark gray
+        shininess: MATERIAL_SHININESS,
+        flatShading: true
+    });
+
+    // Position board centered at origin (0,0,0) for X and Z, with surface just below y=0
+    // BoxGeometry is centered, so position at -boardHeight/2 makes top at y = 0
+    // We want it slightly below y=0, so add a small negative offset
+    const smallOffset = 0.1; // Small offset to put board surface just below y=0
+    const boardYPosition = -SPHERE_RADIUS + 1.8;
+    const boardXPosition = 7.5; // Center board at origin for X
+    const boardZPosition = 12.5; // Center board at origin for Z
+    const boardMesh_temp = new THREE.Mesh(boardGeometry, boardMaterial);
+    boardMesh_temp.position.set(boardXPosition, boardYPosition, boardZPosition);
+    boardMesh_temp.updateMatrix();
+
+    // Create CSG object from board
+    let boardCSG = CSG.fromMesh(boardMesh_temp);
+
+    // Create seats for all base layer (z=0) positions
+    const seatPositions = [];
+    for (let x = 0; x < 6; x++) {
+        for (let y = 0; y < 6; y++) {
+            const z = 0;
+            if (x + y + z <= 5) {
+                const pos = boardToScenePosition(x, y, z);
+                seatPositions.push({ x: pos.x, y: pos.y, z: pos.z });
+            }
+        }
+    }
+
+    // Create concave seats for each base layer position
+    for (const seatPos of seatPositions) {
+        // Create an icosahedron geometry for the seat with the same radius as piece atoms
+        // The seat should be a shallow bowl with maximum depth of 15% of radius (seatDepth = 0.75)
+        // We'll scale the sphere in Y direction to create a shallow bowl shape
+        const seatGeometry = new THREE.IcosahedronGeometry(SPHERE_RADIUS, 1);
+        const seatMaterial = new THREE.MeshPhongMaterial();
+
+        // Create the sphere for the seat and scale it in Y to create a shallow bowl
+        // Scale Y by seatDepth / SPHERE_RADIUS to make it shallow (0.75 / 5 = 0.15)
+        const seatMesh = new THREE.Mesh(seatGeometry, seatMaterial);
+        seatMesh.scale.set(1, seatDepth / SPHERE_RADIUS, 1); // Scale Y to create shallow bowl
+        // Position seat at the actual seat position (board is at origin)
+        seatMesh.position.set(
+            seatPos.x - 8,  // Use actual seat position (board is centered at origin)
+            boardYPosition + boardDepth / 2 + smallOffset - seatDepth / 2,  // Position at board surface minus half seat depth
+            seatPos.z - 12.5// Use actual seat position (board is centered at origin)
+        );
+        seatMesh.updateMatrix();
+
+        // Create CSG object from seat
+        const seatCSG = CSG.fromMesh(seatMesh);
+
+        // Subtract seat from board to create the recess
+        boardCSG = boardCSG.subtract(seatCSG);
+    }
+
+    // Convert CSG result back to geometry
+    // toGeometry requires a Matrix4 parameter - use identity matrix since we'll position the mesh separately
+    const identityMatrix = new THREE.Matrix4();
+    const finalGeometry = boardCSG.toGeometry(identityMatrix);
+    const finalMesh = new THREE.Mesh(finalGeometry, boardMaterial);
+    // Position the final mesh at the same location as the temp mesh (centered at origin)
+    finalMesh.position.set(boardXPosition, boardYPosition, boardZPosition);
+
+    boardMesh = finalMesh;
+    scene.add(boardMesh);
 }
 
 function positionToBit(x, y, z) {
