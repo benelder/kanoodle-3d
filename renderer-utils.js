@@ -178,13 +178,23 @@ export function createConnector(material, pos1, pos2, offsetX = 0, offsetY = 0, 
 export function createScene() {
     const scene = new THREE.Scene();
 
-    // Add ambient light to the scene
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    // Set a lighter background color for better visibility
+    scene.background = new THREE.Color(0x242c38); // Dark gray background instead of black
+
+    // Add ambient light to the scene - increased intensity for better board visibility
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    // Main directional light - increased intensity
+    const dirLight = new THREE.DirectionalLight(0xffffff, .3);
     dirLight.position.set(10, 20, 0);
     scene.add(dirLight);
+
+    // Add a second directional light from opposite direction to reduce harsh shadows
+    const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.1);
+    dirLight2.position.set(-10, 10, -10);
+    scene.add(dirLight2);
+
 
     return scene;
 }
