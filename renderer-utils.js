@@ -186,12 +186,12 @@ export function createScene() {
     scene.add(ambientLight);
 
     // Main directional light - increased intensity
-    const dirLight = new THREE.DirectionalLight(0xffffff, .3);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
     dirLight.position.set(10, 20, 0);
     scene.add(dirLight);
 
     // Add a second directional light from opposite direction to reduce harsh shadows
-    const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.1);
+    const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
     dirLight2.position.set(-10, 10, -10);
     scene.add(dirLight2);
 

@@ -51,8 +51,8 @@ const pieces = [
 // Arrange pieces in a 4x3 grid
 const COLUMNS = 4;
 const ROWS = 3;
-const SPACING_X = 80; // Spacing between columns
-const SPACING_Z = 80; // Spacing between rows (in Z direction)
+const SPACING_X = 40; // Spacing between columns
+const SPACING_Z = 50; // Spacing between rows (in Z direction)
 
 // Create and position each piece
 pieces.forEach((piece, index) => {
