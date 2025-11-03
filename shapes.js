@@ -86,6 +86,68 @@ function createSphere(material, x, y, z, offsetX = 0, offsetY = 0, offsetZ = 0) 
     return sphere;
 }
 
+// Calculate the 3D distance between two atoms in scene coordinates
+function getAtomDistance(atom1, atom2) {
+    const pos1 = boardToScenePosition(atom1.offset.x, atom1.offset.y, atom1.offset.z);
+    const pos2 = boardToScenePosition(atom2.offset.x, atom2.offset.y, atom2.offset.z);
+    const dx = pos1.x - pos2.x;
+    const dy = pos1.y - pos2.y;
+    const dz = pos1.z - pos2.z;
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+// Check if two atoms are adjacent (neighbors in the hexagonal close packing)
+function areAdjacent(atom1, atom2) {
+    // In hexagonal close packing, adjacent atoms are 2 * SPHERE_RADIUS apart
+    // Allow a small tolerance for floating point comparison
+    const expectedDistance = 2 * SPHERE_RADIUS;
+    const actualDistance = getAtomDistance(atom1, atom2);
+    const tolerance = 0.5; // Small tolerance for floating point precision
+    return Math.abs(actualDistance - expectedDistance) < tolerance;
+}
+
+// Create a connector cylinder between two adjacent atoms
+function createConnector(material, atom1, atom2, offsetX = 0, offsetY = 0, offsetZ = 0) {
+    const pos1 = boardToScenePosition(atom1.offset.x, atom1.offset.y, atom1.offset.z);
+    const pos2 = boardToScenePosition(atom2.offset.x, atom2.offset.y, atom2.offset.z);
+
+    const x1 = pos1.x + offsetX;
+    const y1 = pos1.y + offsetY;
+    const z1 = pos1.z + offsetZ;
+    const x2 = pos2.x + offsetX;
+    const y2 = pos2.y + offsetY;
+    const z2 = pos2.z + offsetZ;
+
+    // Calculate distance and direction
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const dz = z2 - z1;
+    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+    // Connector radius is 20% of sphere diameter = 0.2 * 2 * SPHERE_RADIUS
+    const connectorRadius = 0.2 * 2 * SPHERE_RADIUS;
+
+    // Create cylinder geometry
+    const geometry = new THREE.CylinderGeometry(connectorRadius, connectorRadius, distance, 8);
+    const cylinder = new THREE.Mesh(geometry, material);
+
+    // Position cylinder at midpoint between atoms
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
+    const midZ = (z1 + z2) / 2;
+    cylinder.position.set(midX, midY, midZ);
+
+    // Rotate cylinder to align with the direction between atoms
+    // The cylinder's default orientation is along Y-axis, so we need to rotate it
+    const direction = new THREE.Vector3(dx, dy, dz).normalize();
+    const up = new THREE.Vector3(0, 1, 0);
+    const quaternion = new THREE.Quaternion();
+    quaternion.setFromUnitVectors(up, direction);
+    cylinder.quaternion.copy(quaternion);
+
+    return cylinder;
+}
+
 // Create all 12 pieces
 const pieces = [
     new Lime(),      // A
@@ -132,6 +194,23 @@ pieces.forEach((piece, index) => {
             offsetZ
         );
         scene.add(sphere);
+    }
+
+    // Add connectors between adjacent atoms
+    for (let i = 0; i < piece.nodes.length; i++) {
+        for (let j = i + 1; j < piece.nodes.length; j++) {
+            if (areAdjacent(piece.nodes[i], piece.nodes[j])) {
+                const connector = createConnector(
+                    material,
+                    piece.nodes[i],
+                    piece.nodes[j],
+                    offsetX,
+                    0,
+                    offsetZ
+                );
+                scene.add(connector);
+            }
+        }
     }
 });
 

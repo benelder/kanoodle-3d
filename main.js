@@ -146,9 +146,21 @@ function drawBoard() {
     // Iterate over placed pieces and draw their positions
     for (const piece of board.piecesUsed.values()) {
         const material = getMaterial(piece.character);
+        // Draw all atoms/spheres for this piece
         for (const atom of piece.absolutePosition) {
             const sphere = createSphere(material, atom.offset.x, atom.offset.y, atom.offset.z);
             scene.add(sphere);
+        }
+        // Add connectors between adjacent atoms in this piece
+        for (let i = 0; i < piece.absolutePosition.length; i++) {
+            for (let j = i + 1; j < piece.absolutePosition.length; j++) {
+                const pos1 = piece.absolutePosition[i].offset;
+                const pos2 = piece.absolutePosition[j].offset;
+                if (arePositionsAdjacent(pos1, pos2)) {
+                    const connector = createConnector(material, pos1, pos2);
+                    scene.add(connector);
+                }
+            }
         }
     }
     drawEmptyCells();
@@ -272,6 +284,61 @@ function createSphere(material, x, y, z) {
     const pos = boardToScenePosition(x, y, z);
     sphere.position.set(pos.x, pos.y, pos.z);
     return sphere;
+}
+
+// Calculate the 3D distance between two positions in scene coordinates
+function getPositionDistance(pos1, pos2) {
+    const scenePos1 = boardToScenePosition(pos1.x, pos1.y, pos1.z);
+    const scenePos2 = boardToScenePosition(pos2.x, pos2.y, pos2.z);
+    const dx = scenePos1.x - scenePos2.x;
+    const dy = scenePos1.y - scenePos2.y;
+    const dz = scenePos1.z - scenePos2.z;
+    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+// Check if two positions are adjacent (neighbors in the hexagonal close packing)
+function arePositionsAdjacent(pos1, pos2) {
+    // In hexagonal close packing, adjacent atoms are 2 * SPHERE_RADIUS apart
+    // Allow a small tolerance for floating point comparison
+    const expectedDistance = 2 * SPHERE_RADIUS;
+    const actualDistance = getPositionDistance(pos1, pos2);
+    const tolerance = 0.5; // Small tolerance for floating point precision
+    return Math.abs(actualDistance - expectedDistance) < tolerance;
+}
+
+// Create a connector cylinder between two adjacent positions
+function createConnector(material, pos1, pos2) {
+    const scenePos1 = boardToScenePosition(pos1.x, pos1.y, pos1.z);
+    const scenePos2 = boardToScenePosition(pos2.x, pos2.y, pos2.z);
+
+    // Calculate distance and direction
+    const dx = scenePos2.x - scenePos1.x;
+    const dy = scenePos2.y - scenePos1.y;
+    const dz = scenePos2.z - scenePos1.z;
+    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+    // Connector radius is 20% of sphere diameter = 0.2 * 2 * SPHERE_RADIUS
+    const connectorRadius = 0.2 * 2 * SPHERE_RADIUS;
+
+    // Create cylinder geometry
+    const geometry = new THREE.CylinderGeometry(connectorRadius, connectorRadius, distance, 8);
+    const cylinder = new THREE.Mesh(geometry, material);
+
+    // Position cylinder at midpoint between positions
+    const midX = (scenePos1.x + scenePos2.x) / 2;
+    const midY = (scenePos1.y + scenePos2.y) / 2;
+    const midZ = (scenePos1.z + scenePos2.z) / 2;
+    cylinder.position.set(midX, midY, midZ);
+
+    // Rotate cylinder to align with the direction between positions
+    // The cylinder's default orientation is along Y-axis, so we need to rotate it
+    const direction = new THREE.Vector3(dx, dy, dz).normalize();
+    const up = new THREE.Vector3(0, 1, 0);
+    const quaternion = new THREE.Quaternion();
+    quaternion.setFromUnitVectors(up, direction);
+    cylinder.quaternion.copy(quaternion);
+
+    return cylinder;
 }
 
 function positionUsesLocation(position, x, y, z) {
