@@ -92,7 +92,8 @@ const renderer = new THREE.WebGLRenderer();
 const mainPanel = document.querySelector('#main-panel');
 
 // Set up the camera
-const camera = new THREE.OrthographicCamera(window.innerWidth / - 16, window.innerWidth / 16, window.innerHeight / 16, window.innerHeight / - 16, -500, 100);
+const ZOOM_FACTOR = 6;
+const camera = new THREE.OrthographicCamera(window.innerWidth / - ZOOM_FACTOR, window.innerWidth / ZOOM_FACTOR, window.innerHeight / ZOOM_FACTOR, window.innerHeight / - ZOOM_FACTOR, -500, 100);
 camera.position.set(1, 1, 1);
 // Set up the renderer
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -381,7 +382,7 @@ function drawEmptyCells() {
 function toggleEmptyCells() {
     showEmptyCells = !showEmptyCells;
     drawEmptyCells();
-    btnToggleEmptyCells.innerText = showEmptyCells ? 'Hide Empty Cells' : 'Show Empty Cells';
+    btnToggleEmptyCells.innerText = showEmptyCells ? 'Empty Cells Off' : 'Empty Cells On';
 }
 
 function updateEmptyCellOpacity() {
