@@ -287,87 +287,25 @@ function calculatePyramidBounds() {
 }
 
 /**
- * Creates a hollow hemisphere from an icosahedron geometry (surface only, no volume)
+ * Creates a hemisphere geometry using SphereGeometry with clipping parameters
  * @param {number} radius - Radius of the hemisphere
- * @returns {THREE.BufferGeometry} Geometry representing the bottom half of an icosahedron
+ * @returns {THREE.BufferGeometry} Geometry representing the bottom half of a sphere
  */
 function createIcosahedronHemisphere(radius) {
-    // Create full icosahedron geometry
-    const geometry = new THREE.IcosahedronGeometry(radius, 1);
-
-    // Get position attribute
-    const positions = geometry.attributes.position;
-    const vertices = [];
-    for (let i = 0; i < positions.count; i++) {
-        vertices.push(new THREE.Vector3().fromBufferAttribute(positions, i));
-    }
-
-    // Get indices - IcosahedronGeometry may not be indexed by default
-    // Try to get index, or create indices from triangles
-    let indices;
-    const indexAttribute = geometry.getIndex();
-
-    if (indexAttribute && indexAttribute.array && indexAttribute.array.length > 0) {
-        indices = indexAttribute.array;
-    } else {
-        // Geometry is not indexed - create indices assuming triangles (3 vertices per face)
-        // For non-indexed geometry, vertices are already in triangle order
-        indices = [];
-        for (let i = 0; i < positions.count; i++) {
-            indices.push(i);
-        }
-    }
-
-    // Filter faces - keep only those that form the bottom hemisphere (y <= 0)
-    const newIndices = [];
-    const tolerance = 0.001; // Small tolerance for equator detection
-
-    for (let i = 0; i < indices.length; i += 3) {
-        const v0 = vertices[indices[i]];
-        const v1 = vertices[indices[i + 1]];
-        const v2 = vertices[indices[i + 2]];
-
-        // Count vertices in bottom hemisphere
-        const bottomCount = (v0.y <= tolerance ? 1 : 0) +
-            (v1.y <= tolerance ? 1 : 0) +
-            (v2.y <= tolerance ? 1 : 0);
-
-        // Keep face if at least 2 vertices are in bottom hemisphere
-        // This ensures we get the complete bottom hemisphere including faces that cross the equator
-        if (bottomCount >= 2) {
-            newIndices.push(indices[i], indices[i + 1], indices[i + 2]);
-        } else if (bottomCount === 1) {
-            // Include faces with exactly one vertex in bottom if the other two are very close to equator
-            const avgY = (v0.y + v1.y + v2.y) / 3;
-            if (avgY <= tolerance * 2) {
-                newIndices.push(indices[i], indices[i + 1], indices[i + 2]);
-            }
-        }
-    }
-
-    // Create new geometry with only the bottom hemisphere faces
-    const hemisphereGeometry = new THREE.BufferGeometry();
-    // Clone attributes to avoid sharing references
-    const positionAttribute = geometry.attributes.position.clone();
-
-    // Clip vertices at the equator (y=0) - clamp any vertex above surface to exactly y=0
-    const clipTolerance = 0.001; // Small tolerance for equator clipping
-    const positionArray = positionAttribute.array;
-    for (let i = 1; i < positionArray.length; i += 3) { // i=1 is y coordinate, stride is 3 (x, y, z)
-        if (positionArray[i] > -clipTolerance) { // If y is above or very close to 0
-            positionArray[i] = 0; // Clamp to exactly 0
-        }
-    }
-
-    hemisphereGeometry.setAttribute('position', positionAttribute);
-    if (geometry.attributes.normal) {
-        hemisphereGeometry.setAttribute('normal', geometry.attributes.normal.clone());
-    }
-    hemisphereGeometry.setIndex(newIndices);
-    hemisphereGeometry.computeVertexNormals();
-
-    // Dispose of the original geometry to free memory
-    geometry.dispose();
+    // Create hemisphere using SphereGeometry with clipping parameters
+    // In Three.js SphereGeometry:
+    // - phi: angle around Y axis (horizontal sweep, longitude) - 0 to 2*Math.PI
+    // - theta: angle from positive Y axis (vertical sweep, latitude) - 0 (top) to Math.PI (bottom)
+    // For bottom hemisphere (y <= 0): thetaStart = Math.PI/2 (equator), thetaLength = Math.PI/2 (to bottom)
+    const hemisphereGeometry = new THREE.SphereGeometry(
+        radius,
+        16, // widthSegments (horizontal resolution)
+        8,  // heightSegments (vertical resolution)
+        0,  // phiStart (start at 0 degrees horizontally)
+        Math.PI * 2, // phiLength (full circle horizontally)
+        Math.PI / 2, // thetaStart (start at equator, y=0)
+        Math.PI / 2  // thetaLength (go to bottom - creates bottom hemisphere)
+    );
 
     return hemisphereGeometry;
 }
