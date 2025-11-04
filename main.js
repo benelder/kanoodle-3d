@@ -24,6 +24,7 @@ let placingPiece = null;
 let showEmptyCells = false;
 let emptyCellMeshes = [];
 let emptyCellOpacity = 0.2;
+let showAxesHelper = false; // Tracks axes helper visibility
 let manualStateSnapshot = null; // Stores manually-placed pieces state
 let boardMesh = null; // Reference to the board mesh
 let boardSeats = []; // Array to store seat meshes
@@ -41,10 +42,53 @@ btnResetToManual.addEventListener('click', () => resetToManualState());
 const btnToggleEmptyCells = document.getElementById("btnToggleEmptyCells");
 btnToggleEmptyCells.addEventListener('click', () => toggleEmptyCells());
 
+const btnToggleAxesHelper = document.getElementById("btnToggleAxesHelper");
+btnToggleAxesHelper.addEventListener('click', () => toggleAxesHelper());
+
 const sliderEmptyCellOpacity = document.getElementById("sliderEmptyCellOpacity");
 const lblEmptyCellOpacity = document.getElementById("lblEmptyCellOpacity");
 lblEmptyCellOpacity.innerText = emptyCellOpacity.toFixed(2);
 sliderEmptyCellOpacity.addEventListener('input', () => updateEmptyCellOpacity());
+
+// Initialize lighting controls
+const sliderAmbientIntensity = document.getElementById("sliderAmbientIntensity");
+const lblAmbientIntensity = document.getElementById("lblAmbientIntensity");
+sliderAmbientIntensity.addEventListener('input', () => updateAmbientIntensity());
+
+const sliderDirLightIntensity = document.getElementById("sliderDirLightIntensity");
+const lblDirLightIntensity = document.getElementById("lblDirLightIntensity");
+sliderDirLightIntensity.addEventListener('input', () => updateDirLightIntensity());
+
+const sliderDirLightX = document.getElementById("sliderDirLightX");
+const lblDirLightX = document.getElementById("lblDirLightX");
+sliderDirLightX.addEventListener('input', () => updateDirLightPosition());
+
+const sliderDirLightY = document.getElementById("sliderDirLightY");
+const lblDirLightY = document.getElementById("lblDirLightY");
+sliderDirLightY.addEventListener('input', () => updateDirLightPosition());
+
+const sliderDirLightZ = document.getElementById("sliderDirLightZ");
+const lblDirLightZ = document.getElementById("lblDirLightZ");
+sliderDirLightZ.addEventListener('input', () => updateDirLightPosition());
+
+const sliderDirLight2Intensity = document.getElementById("sliderDirLight2Intensity");
+const lblDirLight2Intensity = document.getElementById("lblDirLight2Intensity");
+sliderDirLight2Intensity.addEventListener('input', () => updateDirLight2Intensity());
+
+const sliderDirLight2X = document.getElementById("sliderDirLight2X");
+const lblDirLight2X = document.getElementById("lblDirLight2X");
+sliderDirLight2X.addEventListener('input', () => updateDirLight2Position());
+
+const sliderDirLight2Y = document.getElementById("sliderDirLight2Y");
+const lblDirLight2Y = document.getElementById("lblDirLight2Y");
+sliderDirLight2Y.addEventListener('input', () => updateDirLight2Position());
+
+const sliderDirLight2Z = document.getElementById("sliderDirLight2Z");
+const lblDirLight2Z = document.getElementById("lblDirLight2Z");
+sliderDirLight2Z.addEventListener('input', () => updateDirLight2Position());
+
+const btnResetLighting = document.getElementById("btnResetLighting");
+btnResetLighting.addEventListener('click', () => resetLighting());
 
 // Initialize filter dropdowns
 const filterDropdowns = [
@@ -98,13 +142,24 @@ function createButton(name, key, className, clickHandler) {
 }
 
 // Set up the scene
-const scene = createScene();
+const { scene, ambientLight, dirLight, dirLight2 } = createScene();
 scene.up.set(0, 0, 1);
+
+// Store default lighting values for reset functionality
+const defaultLighting = {
+    ambientIntensity: 0.7,
+    dirLightIntensity: 1.5,
+    dirLightPosition: { x: 0, y: 10, z: 20 },
+    dirLight2Intensity: 0.3,
+    dirLight2Position: { x: -10, y: -10, z: 10 }
+};
 
 
 // Add axes helper to visualize rotation axes
-const axesHelper = new THREE.AxesHelper(100); // 100 units length
+const axisLength = 70;
+const axesHelper = new THREE.AxesHelper(axisLength); // 100 units length
 scene.add(axesHelper);
+axesHelper.visible = showAxesHelper;
 
 // Add axis labels
 function createAxisLabel(text, color, position) {
@@ -143,8 +198,7 @@ function createAxisLabel(text, color, position) {
 }
 
 // Add labels at the end of each axis (110 units from origin)
-const axisLength = 100;
-const labelOffset = 110;
+const labelOffset = 80;
 const axesLabels = [
     createAxisLabel('X', '#ff0000', new THREE.Vector3(labelOffset, 0, 0)), // Red X axis
     createAxisLabel('Y', '#00ff00', new THREE.Vector3(0, labelOffset, 0)), // Green Y axis
@@ -152,6 +206,7 @@ const axesLabels = [
 ];
 
 axesLabels.forEach(label => scene.add(label));
+axesLabels.forEach(label => label.visible = showAxesHelper);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setClearColor(0x1a1a1a, 1); // Dark gray background for better visibility
@@ -640,6 +695,16 @@ function toggleEmptyCells() {
     btnToggleEmptyCells.innerText = showEmptyCells ? 'Empty Cells Off' : 'Empty Cells On';
 }
 
+function toggleAxesHelper() {
+    showAxesHelper = !showAxesHelper;
+    axesHelper.visible = showAxesHelper;
+    // Also toggle axis labels visibility
+    axesLabels.forEach(label => {
+        label.visible = showAxesHelper;
+    });
+    btnToggleAxesHelper.innerText = showAxesHelper ? 'Axes Off' : 'Axes On';
+}
+
 function updateEmptyCellOpacity() {
     emptyCellOpacity = parseFloat(sliderEmptyCellOpacity.value);
     lblEmptyCellOpacity.innerText = emptyCellOpacity.toFixed(2);
@@ -648,6 +713,83 @@ function updateEmptyCellOpacity() {
     emptyCellMeshes.forEach(mesh => {
         mesh.material.opacity = emptyCellOpacity;
     });
+}
+
+function updateAmbientIntensity() {
+    const intensity = parseFloat(sliderAmbientIntensity.value);
+    ambientLight.intensity = intensity;
+    lblAmbientIntensity.innerText = intensity.toFixed(1);
+}
+
+function updateDirLightIntensity() {
+    const intensity = parseFloat(sliderDirLightIntensity.value);
+    dirLight.intensity = intensity;
+    lblDirLightIntensity.innerText = intensity.toFixed(1);
+}
+
+function updateDirLightPosition() {
+    const x = parseFloat(sliderDirLightX.value);
+    const y = parseFloat(sliderDirLightY.value);
+    const z = parseFloat(sliderDirLightZ.value);
+    dirLight.position.set(x, y, z);
+    lblDirLightX.innerText = x;
+    lblDirLightY.innerText = y;
+    lblDirLightZ.innerText = z;
+}
+
+function updateDirLight2Intensity() {
+    const intensity = parseFloat(sliderDirLight2Intensity.value);
+    dirLight2.intensity = intensity;
+    lblDirLight2Intensity.innerText = intensity.toFixed(1);
+}
+
+function updateDirLight2Position() {
+    const x = parseFloat(sliderDirLight2X.value);
+    const y = parseFloat(sliderDirLight2Y.value);
+    const z = parseFloat(sliderDirLight2Z.value);
+    dirLight2.position.set(x, y, z);
+    lblDirLight2X.innerText = x;
+    lblDirLight2Y.innerText = y;
+    lblDirLight2Z.innerText = z;
+}
+
+function resetLighting() {
+    // Reset ambient light
+    ambientLight.intensity = defaultLighting.ambientIntensity;
+    sliderAmbientIntensity.value = defaultLighting.ambientIntensity;
+    lblAmbientIntensity.innerText = defaultLighting.ambientIntensity.toFixed(1);
+
+    // Reset dirLight
+    dirLight.intensity = defaultLighting.dirLightIntensity;
+    sliderDirLightIntensity.value = defaultLighting.dirLightIntensity;
+    lblDirLightIntensity.innerText = defaultLighting.dirLightIntensity.toFixed(1);
+    dirLight.position.set(
+        defaultLighting.dirLightPosition.x,
+        defaultLighting.dirLightPosition.y,
+        defaultLighting.dirLightPosition.z
+    );
+    sliderDirLightX.value = defaultLighting.dirLightPosition.x;
+    sliderDirLightY.value = defaultLighting.dirLightPosition.y;
+    sliderDirLightZ.value = defaultLighting.dirLightPosition.z;
+    lblDirLightX.innerText = defaultLighting.dirLightPosition.x;
+    lblDirLightY.innerText = defaultLighting.dirLightPosition.y;
+    lblDirLightZ.innerText = defaultLighting.dirLightPosition.z;
+
+    // Reset dirLight2
+    dirLight2.intensity = defaultLighting.dirLight2Intensity;
+    sliderDirLight2Intensity.value = defaultLighting.dirLight2Intensity;
+    lblDirLight2Intensity.innerText = defaultLighting.dirLight2Intensity.toFixed(1);
+    dirLight2.position.set(
+        defaultLighting.dirLight2Position.x,
+        defaultLighting.dirLight2Position.y,
+        defaultLighting.dirLight2Position.z
+    );
+    sliderDirLight2X.value = defaultLighting.dirLight2Position.x;
+    sliderDirLight2Y.value = defaultLighting.dirLight2Position.y;
+    sliderDirLight2Z.value = defaultLighting.dirLight2Position.z;
+    lblDirLight2X.innerText = defaultLighting.dirLight2Position.x;
+    lblDirLight2Y.innerText = defaultLighting.dirLight2Position.y;
+    lblDirLight2Z.innerText = defaultLighting.dirLight2Position.z;
 }
 
 // Render the scene

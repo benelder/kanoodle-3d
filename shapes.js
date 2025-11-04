@@ -15,7 +15,7 @@ import {
 } from './renderer-utils.js';
 
 // Set up the scene
-const scene = createScene();
+const { scene } = createScene();
 
 // Set up the camera (using OrthographicCamera, with wider near/far for shapes view)
 const camera = createOrthographicCamera(-1000, 1000);

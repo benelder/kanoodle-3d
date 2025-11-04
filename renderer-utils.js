@@ -171,7 +171,7 @@ export function createConnector(material, pos1, pos2, offsetX = 0, offsetY = 0, 
 
 /**
  * Set up Three.js scene with lighting
- * @returns {THREE.Scene} Configured scene
+ * @returns {{scene: THREE.Scene, ambientLight: THREE.AmbientLight, dirLight: THREE.DirectionalLight, dirLight2: THREE.DirectionalLight}} Configured scene and lights
  */
 export function createScene() {
     const scene = new THREE.Scene();
@@ -194,7 +194,7 @@ export function createScene() {
     scene.add(dirLight2);
 
 
-    return scene;
+    return { scene, ambientLight, dirLight, dirLight2 };
 }
 
 /**
