@@ -133,85 +133,6 @@
     <div id="controlPanel">
 
       <div id="colorControls"></div>
-      <div class="top-level-controls">
-        <button disabled="true" class="btn btn-secondary btn-lg" id="btnSolve" style="float:left">Solve</button>
-        <label id="lblNoSolution" style="font-weight: bold; color: #CC0000; display: none;">* No solution found*</label>
-        <button id="btnReset" class="btn btn-secondary btn-lg" style="float:right">Reset</button>
-        <button id="btnResetToManual" class="btn btn-secondary btn-lg" style="float:right; margin-right: 5px;"
-          disabled>Restore</button>
-        <button id="btnToggleEmptyCells" class="btn btn-secondary btn-lg" style="float:right; margin-right: 5px;">
-          Empty Cells On</button>
-        <button id="btnToggleAxesHelper" class="btn btn-secondary btn-lg" style="float:right; margin-right: 5px;">
-          Axes On</button>
-        <div style="clear: both; margin-top: 10px; margin-bottom: 10px;">
-          <label for="sliderEmptyCellOpacity" style="display: inline-block; margin-right: 10px;">Empty Cell
-            Opacity:</label>
-          <input type="range" id="sliderEmptyCellOpacity" min="0" max="0.5" step="0.01" value="0.2"
-            style="width: 150px; display: inline-block;">
-          <span id="lblEmptyCellOpacity" style="margin-left: 10px;">0.2</span>
-        </div>
-        <div style="clear: both; margin-top: 10px; margin-bottom: 10px; border-top: 1px solid #999; padding-top: 10px;">
-          <h4>Lighting Controls</h4>
-          <div style="margin-bottom: 7px;">
-            <label for="sliderAmbientIntensity" style="display: inline-block; width: 120px;">Ambient Intensity:</label>
-            <input type="range" id="sliderAmbientIntensity" min="0" max="2" step="0.1" value="0.7"
-              style="width: 150px; display: inline-block;">
-            <span id="lblAmbientIntensity" style="margin-left: 10px;">0.7</span>
-          </div>
-          <div style="margin-bottom: 7px;">
-            <label for="sliderDirLightIntensity" style="display: inline-block; width: 120px;">Dir Light
-              Intensity:</label>
-            <input type="range" id="sliderDirLightIntensity" min="0" max="3" step="0.1" value="1.5"
-              style="width: 150px; display: inline-block;">
-            <span id="lblDirLightIntensity" style="margin-left: 10px;">1.5</span>
-          </div>
-          <div style="margin-bottom: 7px;">
-            <label for="sliderDirLightX" style="display: inline-block; width: 120px;">Dir Light X:</label>
-            <input type="range" id="sliderDirLightX" min="-50" max="50" step="1" value="0"
-              style="width: 150px; display: inline-block;">
-            <span id="lblDirLightX" style="margin-left: 10px;">0</span>
-          </div>
-          <div style="margin-bottom: 7px;">
-            <label for="sliderDirLightY" style="display: inline-block; width: 120px;">Dir Light Y:</label>
-            <input type="range" id="sliderDirLightY" min="-50" max="50" step="1" value="10"
-              style="width: 150px; display: inline-block;">
-            <span id="lblDirLightY" style="margin-left: 10px;">10</span>
-          </div>
-          <div style="margin-bottom: 7px;">
-            <label for="sliderDirLightZ" style="display: inline-block; width: 120px;">Dir Light Z:</label>
-            <input type="range" id="sliderDirLightZ" min="-50" max="50" step="1" value="20"
-              style="width: 150px; display: inline-block;">
-            <span id="lblDirLightZ" style="margin-left: 10px;">20</span>
-          </div>
-          <div style="margin-bottom: 7px;">
-            <label for="sliderDirLight2Intensity" style="display: inline-block; width: 120px;">Dir Light 2
-              Intensity:</label>
-            <input type="range" id="sliderDirLight2Intensity" min="0" max="3" step="0.1" value="0.3"
-              style="width: 150px; display: inline-block;">
-            <span id="lblDirLight2Intensity" style="margin-left: 10px;">0.3</span>
-          </div>
-          <div style="margin-bottom: 7px;">
-            <label for="sliderDirLight2X" style="display: inline-block; width: 120px;">Dir Light 2 X:</label>
-            <input type="range" id="sliderDirLight2X" min="-50" max="50" step="1" value="-10"
-              style="width: 150px; display: inline-block;">
-            <span id="lblDirLight2X" style="margin-left: 10px;">-10</span>
-          </div>
-          <div style="margin-bottom: 7px;">
-            <label for="sliderDirLight2Y" style="display: inline-block; width: 120px;">Dir Light 2 Y:</label>
-            <input type="range" id="sliderDirLight2Y" min="-50" max="50" step="1" value="-10"
-              style="width: 150px; display: inline-block;">
-            <span id="lblDirLight2Y" style="margin-left: 10px;">-10</span>
-          </div>
-          <div style="margin-bottom: 7px;">
-            <label for="sliderDirLight2Z" style="display: inline-block; width: 120px;">Dir Light 2 Z:</label>
-            <input type="range" id="sliderDirLight2Z" min="-50" max="50" step="1" value="10"
-              style="width: 150px; display: inline-block;">
-            <span id="lblDirLight2Z" style="margin-left: 10px;">10</span>
-          </div>
-          <button id="btnResetLighting" class="btn btn-secondary btn-sm" style="margin-top: 5px;">
-            Reset Lighting</button>
-        </div>
-      </div>
       <div id="filters" style="display:none">
         <div style="float:right; margin-right:5px; padding: 4px; border: solid 1px #aaaaaa; background-color: #efefef;">
           <label id="lblPieceName" class="detail-label"></label>
@@ -354,6 +275,92 @@
           </div>
         </div>
       </div>
+      <div class="top-level-controls">
+        <div style="clear: both; margin-top: 10px; margin-bottom: 10px; border-top: 1px solid #999; padding-top: 10px;">
+          <button disabled="true" class="btn btn-secondary btn-sm" id="btnSolve" style="float:left">Solve</button>
+          <label id="lblNoSolution" style="font-weight: bold; color: #CC0000; display: none;">* No solution
+            found*</label>
+          <button id="btnReset" class="btn btn-secondary btn-sm" style="float:right">Reset</button>
+          <button id="btnResetToManual" class="btn btn-secondary btn-sm" style="float:right; margin-right: 5px;"
+            disabled>Restore</button>
+
+
+          <div style="clear: both; margin-top: 10px; margin-bottom: 10px;">
+
+            <label for="sliderEmptyCellOpacity" style="display: inline-block; margin-right: 10px;">Empty Cell
+              Opacity:</label>
+            <input type="range" id="sliderEmptyCellOpacity" min="0" max="0.5" step="0.01" value="0.2"
+              style="width: 150px; display: inline-block;">
+            <span id="lblEmptyCellOpacity" style="margin-left: 10px;">0.2</span>
+            <button id="btnToggleEmptyCells" class="btn btn-secondary btn-sm" style="float:right; margin-right: 5px;">
+              Empty Cells On</button>
+            <button id="btnToggleAxesHelper" class="btn btn-secondary btn-sm" style="float:left; margin-right: 5px;">
+              Axes On</button>
+          </div>
+        </div>
+        <div style="clear: both; margin-top: 10px; margin-bottom: 10px; border-top: 1px solid #999; padding-top: 10px;">
+          <h4>Lighting Controls</h4>
+          <div style="margin-bottom: 7px;">
+            <label for="sliderAmbientIntensity" style="display: inline-block; width: 120px;">Ambient Intensity:</label>
+            <input type="range" id="sliderAmbientIntensity" min="0" max="2" step="0.1" value="0.7"
+              style="width: 150px; display: inline-block;">
+            <span id="lblAmbientIntensity" style="margin-left: 10px;">0.7</span>
+          </div>
+          <div style="margin-bottom: 7px;">
+            <label for="sliderDirLightIntensity" style="display: inline-block; width: 120px;">Dir Light
+              Intensity:</label>
+            <input type="range" id="sliderDirLightIntensity" min="0" max="3" step="0.1" value="1.5"
+              style="width: 150px; display: inline-block;">
+            <span id="lblDirLightIntensity" style="margin-left: 10px;">1.5</span>
+          </div>
+          <div style="margin-bottom: 7px;">
+            <label for="sliderDirLightX" style="display: inline-block; width: 120px;">Dir Light X:</label>
+            <input type="range" id="sliderDirLightX" min="-50" max="50" step="1" value="0"
+              style="width: 150px; display: inline-block;">
+            <span id="lblDirLightX" style="margin-left: 10px;">0</span>
+          </div>
+          <div style="margin-bottom: 7px;">
+            <label for="sliderDirLightY" style="display: inline-block; width: 120px;">Dir Light Y:</label>
+            <input type="range" id="sliderDirLightY" min="-50" max="50" step="1" value="10"
+              style="width: 150px; display: inline-block;">
+            <span id="lblDirLightY" style="margin-left: 10px;">10</span>
+          </div>
+          <div style="margin-bottom: 7px;">
+            <label for="sliderDirLightZ" style="display: inline-block; width: 120px;">Dir Light Z:</label>
+            <input type="range" id="sliderDirLightZ" min="-50" max="50" step="1" value="20"
+              style="width: 150px; display: inline-block;">
+            <span id="lblDirLightZ" style="margin-left: 10px;">20</span>
+          </div>
+          <div style="margin-bottom: 7px;">
+            <label for="sliderDirLight2Intensity" style="display: inline-block; width: 120px;">Dir Light 2
+              Intensity:</label>
+            <input type="range" id="sliderDirLight2Intensity" min="0" max="3" step="0.1" value="0.3"
+              style="width: 150px; display: inline-block;">
+            <span id="lblDirLight2Intensity" style="margin-left: 10px;">0.3</span>
+          </div>
+          <div style="margin-bottom: 7px;">
+            <label for="sliderDirLight2X" style="display: inline-block; width: 120px;">Dir Light 2 X:</label>
+            <input type="range" id="sliderDirLight2X" min="-50" max="50" step="1" value="-10"
+              style="width: 150px; display: inline-block;">
+            <span id="lblDirLight2X" style="margin-left: 10px;">-10</span>
+          </div>
+          <div style="margin-bottom: 7px;">
+            <label for="sliderDirLight2Y" style="display: inline-block; width: 120px;">Dir Light 2 Y:</label>
+            <input type="range" id="sliderDirLight2Y" min="-50" max="50" step="1" value="-10"
+              style="width: 150px; display: inline-block;">
+            <span id="lblDirLight2Y" style="margin-left: 10px;">-10</span>
+          </div>
+          <div style="margin-bottom: 7px;">
+            <label for="sliderDirLight2Z" style="display: inline-block; width: 120px;">Dir Light 2 Z:</label>
+            <input type="range" id="sliderDirLight2Z" min="-50" max="50" step="1" value="10"
+              style="width: 150px; display: inline-block;">
+            <span id="lblDirLight2Z" style="margin-left: 10px;">10</span>
+          </div>
+          <button id="btnResetLighting" class="btn btn-secondary btn-sm" style="margin-top: 5px;">
+            Reset Lighting</button>
+        </div>
+      </div>
+
     </div>
   </div>
   <div id="main-panel">
