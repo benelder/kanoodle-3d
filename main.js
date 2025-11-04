@@ -1,7 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'OrbitControls'
 import { Board } from './kanoodle.js'
-import { CSG } from 'three-csg-ts';
 import {
     createScene,
     createOrthographicCamera,
@@ -28,6 +27,8 @@ let emptyCellMeshes = [];
 let emptyCellOpacity = 0.2;
 let manualStateSnapshot = null; // Stores manually-placed pieces state
 let boardMesh = null; // Reference to the board mesh
+let boardSeats = []; // Array to store seat meshes
+let boardCylinder = []; // Array to store cylinder wall and bottom meshes
 
 const btnSolve = document.getElementById("btnSolve");
 btnSolve.addEventListener('click', () => attemptSolve());
@@ -246,10 +247,11 @@ function hidePlacingButtons(key) {
 }
 
 function clearBoard() {
-    // Remove all mesh objects from the scene (except the board)
+    // Remove all mesh objects from the scene (except the board, seats, and cylinder)
     const meshesToRemove = [];
     scene.children.forEach(child => {
-        if (child.type === 'Mesh' && child !== boardMesh) {
+        if (child.type === 'Mesh' && child !== boardMesh &&
+            !boardSeats.includes(child) && !boardCylinder.includes(child)) {
             meshesToRemove.push(child);
         }
     });
@@ -285,13 +287,109 @@ function calculatePyramidBounds() {
 }
 
 /**
+ * Creates a hollow hemisphere from an icosahedron geometry (surface only, no volume)
+ * @param {number} radius - Radius of the hemisphere
+ * @returns {THREE.BufferGeometry} Geometry representing the bottom half of an icosahedron
+ */
+function createIcosahedronHemisphere(radius) {
+    // Create full icosahedron geometry
+    const geometry = new THREE.IcosahedronGeometry(radius, 1);
+
+    // Get position attribute
+    const positions = geometry.attributes.position;
+    const vertices = [];
+    for (let i = 0; i < positions.count; i++) {
+        vertices.push(new THREE.Vector3().fromBufferAttribute(positions, i));
+    }
+
+    // Get indices - IcosahedronGeometry may not be indexed by default
+    // Try to get index, or create indices from triangles
+    let indices;
+    const indexAttribute = geometry.getIndex();
+
+    if (indexAttribute && indexAttribute.array && indexAttribute.array.length > 0) {
+        indices = indexAttribute.array;
+    } else {
+        // Geometry is not indexed - create indices assuming triangles (3 vertices per face)
+        // For non-indexed geometry, vertices are already in triangle order
+        indices = [];
+        for (let i = 0; i < positions.count; i++) {
+            indices.push(i);
+        }
+    }
+
+    // Filter faces - keep only those that form the bottom hemisphere (y <= 0)
+    const newIndices = [];
+    const tolerance = 0.001; // Small tolerance for equator detection
+
+    for (let i = 0; i < indices.length; i += 3) {
+        const v0 = vertices[indices[i]];
+        const v1 = vertices[indices[i + 1]];
+        const v2 = vertices[indices[i + 2]];
+
+        // Count vertices in bottom hemisphere
+        const bottomCount = (v0.y <= tolerance ? 1 : 0) +
+            (v1.y <= tolerance ? 1 : 0) +
+            (v2.y <= tolerance ? 1 : 0);
+
+        // Keep face if at least 2 vertices are in bottom hemisphere
+        // This ensures we get the complete bottom hemisphere including faces that cross the equator
+        if (bottomCount >= 2) {
+            newIndices.push(indices[i], indices[i + 1], indices[i + 2]);
+        } else if (bottomCount === 1) {
+            // Include faces with exactly one vertex in bottom if the other two are very close to equator
+            const avgY = (v0.y + v1.y + v2.y) / 3;
+            if (avgY <= tolerance * 2) {
+                newIndices.push(indices[i], indices[i + 1], indices[i + 2]);
+            }
+        }
+    }
+
+    // Create new geometry with only the bottom hemisphere faces
+    const hemisphereGeometry = new THREE.BufferGeometry();
+    // Clone attributes to avoid sharing references
+    const positionAttribute = geometry.attributes.position.clone();
+
+    // Clip vertices at the equator (y=0) - clamp any vertex above surface to exactly y=0
+    const clipTolerance = 0.001; // Small tolerance for equator clipping
+    const positionArray = positionAttribute.array;
+    for (let i = 1; i < positionArray.length; i += 3) { // i=1 is y coordinate, stride is 3 (x, y, z)
+        if (positionArray[i] > -clipTolerance) { // If y is above or very close to 0
+            positionArray[i] = 0; // Clamp to exactly 0
+        }
+    }
+
+    hemisphereGeometry.setAttribute('position', positionAttribute);
+    if (geometry.attributes.normal) {
+        hemisphereGeometry.setAttribute('normal', geometry.attributes.normal.clone());
+    }
+    hemisphereGeometry.setIndex(newIndices);
+    hemisphereGeometry.computeVertexNormals();
+
+    // Dispose of the original geometry to free memory
+    geometry.dispose();
+
+    return hemisphereGeometry;
+}
+
+/**
  * Creates the board with recessed seats for the base layer (z=0)
  */
 function createBoard() {
+    // Clean up existing seats if any
+    boardSeats.forEach(seat => scene.remove(seat));
+    boardSeats = [];
+
+    // Clean up existing cylinder if any
+    boardCylinder.forEach(part => scene.remove(part));
+    boardCylinder = [];
+
     const boardRadius = 8 * SPHERE_RADIUS;
     const holeRadius = .85 * SPHERE_RADIUS;
     const boardThickness = 0.5; // Small thickness for the board
     const seatDepth = 2.5;
+    const wallHeight = 1.5 * SPHERE_RADIUS;
+    const wallThickness = 0.3; // Thickness of the cylinder wall
 
     // Create the outer circle shape
     const boardShape = new THREE.Shape();
@@ -343,7 +441,7 @@ function createBoard() {
 
     // Create material for the board
     const boardMaterial = new THREE.MeshPhongMaterial({
-        color: 0x888888,
+        color: 0x222222,
         flatShading: true,
         shininess: MATERIAL_SHININESS
     });
@@ -352,6 +450,111 @@ function createBoard() {
     boardMesh = new THREE.Mesh(boardGeometry, boardMaterial);
     boardMesh.position.set(centroidX, 0, centroidZ);
     scene.add(boardMesh);
+
+    // Calculate board surface level in world coordinates
+    // Board mesh is at y=0, geometry is translated -boardThickness/2 - seatDepth
+    // So board surface (top) is at: 0 + (-boardThickness/2 - seatDepth) + boardThickness/2 = -seatDepth
+    const boardSurfaceY = -seatDepth;
+
+    // Create material for the seats - double-sided so interior is visible and opaque
+    const seatMaterial = new THREE.MeshPhongMaterial({
+        color: 0x333333,
+        flatShading: true,
+        shininess: MATERIAL_SHININESS,
+        side: THREE.DoubleSide // Render both sides so interior is visible when looking down
+    });
+
+    // Create hollow hemispherical seats for each base position
+    for (const pos of basePositions) {
+        // Create hollow icosahedron hemisphere geometry (surface only, no volume)
+        const seatGeometry = createIcosahedronHemisphere(holeRadius);
+
+        // Position seat at the hole location (using scene coordinates directly)
+        const seatX = pos.x;
+        const seatZ = pos.z;
+
+        // Position the hemisphere so the top (equator) aligns with board surface
+        // The hemisphere center is at the origin, so we position it so the equator is at boardSurfaceY
+        const seatY = boardSurfaceY;
+
+        const seat = new THREE.Mesh(seatGeometry, seatMaterial);
+        seat.position.set(seatX, seatY, seatZ);
+
+        // Flatten the seat to make it more shallow (scale Y dimension down)
+        const seatShallowness = 0.4; // 0.6 = 60% of original depth, making it more shallow
+        seat.scale.y = seatShallowness;
+
+        scene.add(seat);
+        boardSeats.push(seat); // Store seat reference so it doesn't get removed by clearBoard
+    }
+
+    // Create hollow cylinder wall around the board
+    const cylinderWallMaterial = new THREE.MeshPhongMaterial({
+        color: 0x222222,
+        flatShading: true,
+        shininess: MATERIAL_SHININESS,
+        side: THREE.DoubleSide
+    });
+
+    // Create hollow cylinder wall (tube) using a ring shape
+    const outerRadius = boardRadius;
+    const innerRadius = outerRadius - wallThickness;
+
+    // Create ring shape for the wall cross-section
+    const ringShape = new THREE.Shape();
+    ringShape.absarc(0, 0, outerRadius, 0, Math.PI * 2, false);
+    const innerHole = new THREE.Path();
+    innerHole.absarc(0, 0, innerRadius, 0, Math.PI * 2, true); // true = clockwise (creates hole)
+    ringShape.holes.push(innerHole);
+
+    // Extrude the ring to create the cylinder wall
+    const wallExtrudeSettings = {
+        depth: wallHeight,
+        bevelEnabled: false
+    };
+    const wallGeometry = new THREE.ExtrudeGeometry(ringShape, wallExtrudeSettings);
+
+    // Rotate to align with vertical axis (extrude creates in XY plane, we need it vertical)
+    wallGeometry.rotateX(-Math.PI / 2);
+
+    // Position the wall so it extends from board surface down
+    // After rotation by -90 degrees around X:
+    // - Original Z axis (extrusion direction) becomes Y axis
+    // - Original z=0 (front face) becomes y=0 (top)
+    // - Original z=depth (back face) becomes y=-depth (bottom)
+    // Board surface is at y = -seatDepth in world coordinates
+    // Wall mesh is positioned at y=0 (world), so we need geometry top (local y=0) at world y=-seatDepth
+    // This means we translate the geometry by -seatDepth in Y
+    wallGeometry.translate(0, -10, 0);
+
+    const wallBottomY = -seatDepth - wallHeight;
+
+    const cylinderWall = new THREE.Mesh(wallGeometry, cylinderWallMaterial);
+    cylinderWall.position.set(centroidX, 0, centroidZ);
+    scene.add(cylinderWall);
+    boardCylinder.push(cylinderWall);
+
+    // Create bottom disc to close the cylinder (no holes)
+    const bottomShape = new THREE.Shape();
+    bottomShape.absarc(0, 0, outerRadius, 0, Math.PI * 2, false);
+    // No holes in the bottom - it's a solid disc
+
+    // Extrude the bottom disc
+    const bottomExtrudeSettings = {
+        depth: boardThickness,
+        bevelEnabled: false
+    };
+    const bottomGeometry = new THREE.ExtrudeGeometry(bottomShape, bottomExtrudeSettings);
+
+    // Rotate to lie in x-z plane
+    bottomGeometry.rotateX(-Math.PI / 2);
+    // Position at the bottom of the cylinder
+    bottomGeometry.translate(0, -boardThickness / 2, 0);
+
+    const cylinderBottom = new THREE.Mesh(bottomGeometry, boardMaterial);
+    cylinderBottom.position.set(centroidX, wallBottomY, centroidZ);
+    scene.add(cylinderBottom);
+    boardCylinder.push(cylinderBottom);
 }
 
 function positionToBit(x, y, z) {
