@@ -7,9 +7,9 @@ export const ZOOM_FACTOR = 6;
 
 // Coordinate system constants for hexagonal close packing
 const sqrt3 = Math.sqrt(3);
-export const distancei = 2 * SPHERE_RADIUS;      // Spacing along x direction (maps to Z coordinate)
-export const distancej = sqrt3 * SPHERE_RADIUS;  // Spacing along y direction (maps to X coordinate) = 2r * sin(60°)
-export const distancek = sqrt3 * SPHERE_RADIUS;  // Spacing along z direction (maps to Y coordinate) = 2r * sin(60°)
+export const distancei = 2 * SPHERE_RADIUS;      // Spacing along x direction (maps to X coordinate)
+export const distancej = sqrt3 * SPHERE_RADIUS;  // Spacing along y direction (maps to Y coordinate) = 2r * sin(60°)
+export const distancek = sqrt3 * SPHERE_RADIUS;  // Spacing along z direction (maps to Z coordinate/vertical) = 2r * sin(60°)
 
 /**
  * Get material for a piece by its character identifier
@@ -38,12 +38,11 @@ export function getMaterial(val) {
  * @returns {{x: number, y: number, z: number}} Scene position
  */
 export function boardToScenePosition(x, y, z) {
-    const hexOffsetX = z * SPHERE_RADIUS * 0.5;      // Offset in X: half radius per z unit
-    const hexOffsetZ = (y + z) * SPHERE_RADIUS;      // Offset in Z: full radius per (y+z) unit
+    // Hexagonal close packing pattern:
     return {
-        x: y * distancej + hexOffsetX,
-        y: z * distancek,
-        z: x * distancei + hexOffsetZ
+        x: x * distancei + (y + z) * SPHERE_RADIUS,
+        y: y * distancej + z * SPHERE_RADIUS * 0.5,
+        z: z * distancek
     };
 }
 
@@ -160,8 +159,7 @@ export function createConnector(material, pos1, pos2, offsetX = 0, offsetY = 0, 
     const midZ = (z1 + z2) / 2;
     cylinder.position.set(midX, midY, midZ);
 
-    // Rotate cylinder to align with the direction between positions
-    // The cylinder's default orientation is along Y-axis, so we need to rotate it
+    // Rotate cylinder to align with the direction between position
     const direction = new THREE.Vector3(dx, dy, dz).normalize();
     const up = new THREE.Vector3(0, 1, 0);
     const quaternion = new THREE.Quaternion();
@@ -187,12 +185,12 @@ export function createScene() {
 
     // Main directional light - increased intensity
     const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
-    dirLight.position.set(10, 20, 0);
+    dirLight.position.set(0, 10, 20);
     scene.add(dirLight);
 
     // Add a second directional light from opposite direction to reduce harsh shadows
     const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.3);
-    dirLight2.position.set(-10, 10, -10);
+    dirLight2.position.set(-10, -10, 10);
     scene.add(dirLight2);
 
 
@@ -215,6 +213,7 @@ export function createOrthographicCamera(near = -500, far = 100) {
         far
     );
     camera.position.set(1, 1, 1);
+    camera.up.set(0, 0, 1);
     return camera;
 }
 

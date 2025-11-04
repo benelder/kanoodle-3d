@@ -100,10 +100,59 @@ function createButton(name, key, className, clickHandler) {
 
 // Set up the scene
 const scene = createScene();
+scene.up.set(0, 0, 1);
+
 
 // Add axes helper to visualize rotation axes
 const axesHelper = new THREE.AxesHelper(100); // 100 units length
 scene.add(axesHelper);
+
+// Add axis labels
+function createAxisLabel(text, color, position) {
+    // Create a canvas element to draw text
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = 64;
+    canvas.height = 64;
+
+    // Draw text on canvas
+    context.fillStyle = 'rgba(0, 0, 0, 0)'; // Transparent background
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    context.font = 'Bold 48px Arial';
+    context.fillStyle = color;
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.fillText(text, canvas.width / 2, canvas.height / 2);
+
+    // Create texture from canvas
+    const texture = new THREE.CanvasTexture(canvas);
+
+    // Create sprite material
+    const spriteMaterial = new THREE.SpriteMaterial({
+        map: texture,
+        transparent: true,
+        alphaTest: 0.1
+    });
+
+    // Create sprite
+    const sprite = new THREE.Sprite(spriteMaterial);
+    sprite.scale.set(10, 10, 1); // Scale the sprite
+    sprite.position.copy(position);
+
+    return sprite;
+}
+
+// Add labels at the end of each axis (110 units from origin)
+const axisLength = 100;
+const labelOffset = 110;
+const axesLabels = [
+    createAxisLabel('X', '#ff0000', new THREE.Vector3(labelOffset, 0, 0)), // Red X axis
+    createAxisLabel('Y', '#00ff00', new THREE.Vector3(0, labelOffset, 0)), // Green Y axis
+    createAxisLabel('Z', '#0000ff', new THREE.Vector3(0, 0, labelOffset))  // Blue Z axis
+];
+
+axesLabels.forEach(label => scene.add(label));
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setClearColor(0x1a1a1a, 1); // Dark gray background for better visibility
@@ -123,6 +172,12 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enablePan = true;
 controls.enableZoom = true;
 controls.enableRotate = true;
+
+// Set up the camera to look at the origin initially
+// The target will be updated when the board is created
+camera.lookAt(0, 0, 0);
+controls.target.set(0, 0, 0);
+controls.update();
 
 
 
@@ -266,7 +321,7 @@ function clearBoard() {
  */
 function calculatePyramidBounds() {
     let minX = Infinity, maxX = -Infinity;
-    let minZ = Infinity, maxZ = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
 
     // Iterate through all valid pyramid positions (x+y+z <= 5, x,y,z >= 0)
     for (let x = 0; x < 6; x++) {
@@ -276,14 +331,14 @@ function calculatePyramidBounds() {
                     const pos = boardToScenePosition(x, y, z);
                     minX = Math.min(minX, pos.x);
                     maxX = Math.max(maxX, pos.x);
-                    minZ = Math.min(minZ, pos.z);
-                    maxZ = Math.max(maxZ, pos.z);
+                    minY = Math.min(minY, pos.y);
+                    maxY = Math.max(maxY, pos.y);
                 }
             }
         }
     }
 
-    return { minX, maxX, minZ, maxZ };
+    return { minX, maxX, minY, maxY };
 }
 
 /**
@@ -348,20 +403,20 @@ function createBoard() {
 
     // Calculate centroid of all base positions to center the triangle
     let centroidX = 0;
-    let centroidZ = 0;
+    let centroidY = 0;
     for (const pos of basePositions) {
         centroidX += pos.x;
-        centroidZ += pos.z;
+        centroidY += pos.y;
     }
     centroidX /= basePositions.length;
-    centroidZ /= basePositions.length;
+    centroidY /= basePositions.length;
 
     // Create holes for each base position, centered within the circle
-    // Since the board is in the x-z plane (y=0), we use x and z coordinates
+    // Since the board is in the x-y plane (z=0), we use x and y coordinates
     for (const pos of basePositions) {
         const hole = new THREE.Path();
         // Offset holes by centroid to center the triangle
-        hole.absarc(pos.x - centroidX, pos.z - centroidZ, holeRadius, 0, Math.PI * 2, true); // true = clockwise (creates hole)
+        hole.absarc(pos.x - centroidX, pos.y - centroidY, holeRadius, 0, Math.PI * 2, true); // true = clockwise (creates hole)
         boardShape.holes.push(hole);
     }
 
@@ -372,10 +427,10 @@ function createBoard() {
     };
     const boardGeometry = new THREE.ExtrudeGeometry(boardShape, extrudeSettings);
 
-    // Position the board at y=0 (base layer height)
-    // The geometry is created in x-y plane, so we rotate it to lie in x-z plane
-    boardGeometry.rotateX(-Math.PI / 2);
-    boardGeometry.translate(0, -boardThickness / 2 - seatDepth, 0);
+    // Position the board at z=0 (base layer height)
+    // The geometry is created in x-y plane, which is correct for z-up
+    // Extrude along Z direction, so translate in Z
+    boardGeometry.translate(0, 0, -boardThickness / 2 - seatDepth);
 
     // Create material for the board
     const boardMaterial = new THREE.MeshPhongMaterial({
@@ -386,13 +441,13 @@ function createBoard() {
 
     // Create mesh and position it at the centroid so the triangle is centered
     boardMesh = new THREE.Mesh(boardGeometry, boardMaterial);
-    boardMesh.position.set(centroidX, 0, centroidZ);
+    boardMesh.position.set(centroidX, centroidY, 0);
     scene.add(boardMesh);
 
     // Calculate board surface level in world coordinates
-    // Board mesh is at y=0, geometry is translated -boardThickness/2 - seatDepth
+    // Board mesh is at z=0, geometry is translated -boardThickness/2 - seatDepth
     // So board surface (top) is at: 0 + (-boardThickness/2 - seatDepth) + boardThickness/2 = -seatDepth
-    const boardSurfaceY = -seatDepth;
+    const boardSurfaceZ = -seatDepth;
 
     // Create material for the seats - double-sided so interior is visible and opaque
     const seatMaterial = new THREE.MeshPhongMaterial({
@@ -409,17 +464,22 @@ function createBoard() {
 
         // Position seat at the hole location (using scene coordinates directly)
         const seatX = pos.x;
-        const seatZ = pos.z;
+        const seatY = pos.y;
 
         // Position the hemisphere so the top (equator) aligns with board surface
-        // The hemisphere center is at the origin, so we position it so the equator is at boardSurfaceY
-        const seatY = boardSurfaceY;
+        // The hemisphere center is at the origin, so we position it so the equator is at boardSurfaceZ
+        // Hemisphere is created with equator at y=0, so we rotate it to have equator at z=0
+        const seatZ = boardSurfaceZ;
 
         const seat = new THREE.Mesh(seatGeometry, seatMaterial);
         seat.position.set(seatX, seatY, seatZ);
 
-        // Flatten the seat to make it more shallow (scale Y dimension down)
-        const seatShallowness = 0.4; // 0.6 = 60% of original depth, making it more shallow
+        // Rotate hemisphere so equator is horizontal (in X-Y plane) for Z-up
+        // Original hemisphere has equator in X-Z plane, rotate 90 degrees around X to put it in X-Y plane
+        seat.rotateX(Math.PI / 2);
+
+        // Flatten the seat to make it more shallow (scale Z dimension down)
+        const seatShallowness = 0.4; // 0.4 = 40% of original depth, making it more shallow
         seat.scale.y = seatShallowness;
 
         scene.add(seat);
@@ -452,23 +512,18 @@ function createBoard() {
     };
     const wallGeometry = new THREE.ExtrudeGeometry(ringShape, wallExtrudeSettings);
 
-    // Rotate to align with vertical axis (extrude creates in XY plane, we need it vertical)
-    wallGeometry.rotateX(-Math.PI / 2);
+    // Extrude creates in X-Y plane, extruding along Z, which is correct for Z-up
+    // Position the wall so it extends from board surface down (negative Z)
+    // Geometry is created with z=0 at front, z=depth at back
+    // Board surface is at z = -seatDepth in world coordinates
+    // Wall mesh is positioned at z=0 (world), so we need geometry top (local z=0) at world z=-seatDepth
+    // This means we translate the geometry by -seatDepth in Z
+    wallGeometry.translate(0, 0, -seatDepth - wallHeight);
 
-    // Position the wall so it extends from board surface down
-    // After rotation by -90 degrees around X:
-    // - Original Z axis (extrusion direction) becomes Y axis
-    // - Original z=0 (front face) becomes y=0 (top)
-    // - Original z=depth (back face) becomes y=-depth (bottom)
-    // Board surface is at y = -seatDepth in world coordinates
-    // Wall mesh is positioned at y=0 (world), so we need geometry top (local y=0) at world y=-seatDepth
-    // This means we translate the geometry by -seatDepth in Y
-    wallGeometry.translate(0, -10, 0);
-
-    const wallBottomY = -seatDepth - wallHeight;
+    const wallBottomZ = -seatDepth - wallHeight;
 
     const cylinderWall = new THREE.Mesh(wallGeometry, cylinderWallMaterial);
-    cylinderWall.position.set(centroidX, 0, centroidZ);
+    cylinderWall.position.set(centroidX, centroidY, 0);
     scene.add(cylinderWall);
     boardCylinder.push(cylinderWall);
 
@@ -484,13 +539,12 @@ function createBoard() {
     };
     const bottomGeometry = new THREE.ExtrudeGeometry(bottomShape, bottomExtrudeSettings);
 
-    // Rotate to lie in x-z plane
-    bottomGeometry.rotateX(-Math.PI / 2);
+    // Extrude creates in X-Y plane, extruding along Z, which is correct for Z-up
     // Position at the bottom of the cylinder
-    bottomGeometry.translate(0, -boardThickness / 2, 0);
+    bottomGeometry.translate(0, 0, -boardThickness / 2);
 
     const cylinderBottom = new THREE.Mesh(bottomGeometry, boardMaterial);
-    cylinderBottom.position.set(centroidX, wallBottomY, centroidZ);
+    cylinderBottom.position.set(centroidX, centroidY, wallBottomZ);
     scene.add(cylinderBottom);
     boardCylinder.push(cylinderBottom);
 }
