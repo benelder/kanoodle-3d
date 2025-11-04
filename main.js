@@ -4,7 +4,6 @@ import { Board } from './kanoodle.js'
 import {
     createScene,
     createOrthographicCamera,
-    updateCameraOnResize,
     getMaterial,
     createSphere,
     arePositionsAdjacent,
@@ -313,32 +312,6 @@ function clearBoard() {
     meshesToRemove.forEach(mesh => scene.remove(mesh));
     // Clear empty cell meshes array
     emptyCellMeshes = [];
-}
-
-/**
- * Calculates the bounds of the pyramid in scene coordinates
- * by iterating through all valid pyramid positions
- */
-function calculatePyramidBounds() {
-    let minX = Infinity, maxX = -Infinity;
-    let minY = Infinity, maxY = -Infinity;
-
-    // Iterate through all valid pyramid positions (x+y+z <= 5, x,y,z >= 0)
-    for (let x = 0; x < 6; x++) {
-        for (let y = 0; y < 6; y++) {
-            for (let z = 0; z < 6; z++) {
-                if (x + y + z <= 5) {
-                    const pos = boardToScenePosition(x, y, z);
-                    minX = Math.min(minX, pos.x);
-                    maxX = Math.max(maxX, pos.x);
-                    minY = Math.min(minY, pos.y);
-                    maxY = Math.max(maxY, pos.y);
-                }
-            }
-        }
-    }
-
-    return { minX, maxX, minY, maxY };
 }
 
 /**
