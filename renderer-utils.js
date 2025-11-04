@@ -179,7 +179,7 @@ export function createScene() {
     const scene = new THREE.Scene();
 
     // Set a lighter background color for better visibility
-    scene.background = new THREE.Color(0x242c38); // Dark gray background instead of black
+    scene.background = new THREE.Color(0x242c38); // Dark blue/gray background instead of black
 
     // Add ambient light to the scene - increased intensity for better board visibility
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);

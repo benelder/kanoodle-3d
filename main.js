@@ -299,8 +299,8 @@ function createIcosahedronHemisphere(radius) {
     // For bottom hemisphere (y <= 0): thetaStart = Math.PI/2 (equator), thetaLength = Math.PI/2 (to bottom)
     const hemisphereGeometry = new THREE.SphereGeometry(
         radius,
-        16, // widthSegments (horizontal resolution)
-        8,  // heightSegments (vertical resolution)
+        8, // widthSegments (horizontal resolution)
+        3,  // heightSegments (vertical resolution)
         0,  // phiStart (start at 0 degrees horizontally)
         Math.PI * 2, // phiLength (full circle horizontally)
         Math.PI / 2, // thetaStart (start at equator, y=0)
