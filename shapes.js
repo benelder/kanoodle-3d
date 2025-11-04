@@ -51,8 +51,8 @@ const pieces = [
 // Arrange pieces in a 4x3 grid
 const COLUMNS = 4;
 const ROWS = 3;
-const SPACING_X = 40; // Spacing between columns
-const SPACING_Z = 50; // Spacing between rows (in Z direction)
+const SPACING_X = 50; // Spacing between columns
+const SPACING_Y = 40; // Spacing between rows (in Z direction)
 
 // Create and position each piece
 pieces.forEach((piece, index) => {
@@ -61,7 +61,7 @@ pieces.forEach((piece, index) => {
 
     // Calculate offset position for this piece in the grid
     const offsetX = (col - COLUMNS / 2 + 0.5) * SPACING_X;
-    const offsetZ = (row - ROWS / 2 + 0.5) * SPACING_Z;
+    const offsetY = (row - ROWS / 2 + 0.5) * SPACING_Y;
 
     // Get material for this piece
     const material = getMaterial(piece.character);
@@ -74,8 +74,8 @@ pieces.forEach((piece, index) => {
             node.offset.y,
             node.offset.z,
             offsetX,
-            0,
-            offsetZ
+            offsetY,
+            0
         );
         scene.add(sphere);
     }
@@ -89,8 +89,8 @@ pieces.forEach((piece, index) => {
                     piece.nodes[i],
                     piece.nodes[j],
                     offsetX,
-                    0,
-                    offsetZ
+                    offsetY,
+                    0
                 );
                 scene.add(connector);
             }
