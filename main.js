@@ -485,6 +485,13 @@ function createBoard() {
         side: THREE.DoubleSide // Render both sides so interior is visible when looking down
     });
 
+    const rootSeatMaterial = new THREE.MeshPhongMaterial({
+        color: 0x444444,
+        flatShading: true,
+        shininess: MATERIAL_SHININESS,
+        side: THREE.DoubleSide // Render both sides so interior is visible when looking down
+    });
+
     // Create hollow hemispherical seats for each base position
     for (const pos of basePositions) {
         // Create hollow icosahedron hemisphere geometry (surface only, no volume)
@@ -499,7 +506,7 @@ function createBoard() {
         // Hemisphere is created with equator at y=0, so we rotate it to have equator at z=0
         const seatZ = boardSurfaceZ;
 
-        const seat = new THREE.Mesh(seatGeometry, seatMaterial);
+        const seat = new THREE.Mesh(seatGeometry, seatX === 0 && seatY === 0 ? rootSeatMaterial : seatMaterial);
         seat.position.set(seatX, seatY, seatZ);
 
         // Rotate hemisphere so equator is horizontal (in X-Y plane) for Z-up

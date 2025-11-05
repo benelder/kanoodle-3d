@@ -782,12 +782,12 @@ export class Board {
         const unusedColors = this.getUnusedColors();
 
         if (unusedColors.length == 0) {
-            return true;
+            return true; // no pieces left, we have solved the puzzle!
         }
 
-        // Early no-solution guard: union coverage check
+        // Early no-solution guard: union coverage check - huge performance boost!
         // If the union of all remaining placements cannot cover all empty cells, fail fast
-        const emptyMask = validBoardMask & ~this.occupancyMask;
+        const emptyMask = validBoardMask & ~this.occupancyMask; // get a mask of all empty cells
         let unionMask = 0n;
         for (let i = 0; i < unusedColors.length; i++) {
             const colorData = unusedColors[i][1];
@@ -796,7 +796,7 @@ export class Board {
                 unionMask |= vpos[j].bitmask;
             }
         }
-        if ((emptyMask & ~unionMask) !== 0n) {
+        if ((emptyMask & ~unionMask) !== 0n) { // if union !== 0, then there are empty cells that cannot be covered
             return false;
         }
 
