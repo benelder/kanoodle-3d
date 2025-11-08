@@ -1,7 +1,7 @@
 # Kanoodle Extreme Solver - 3D
 
-This was a fun little project I undertook to experiment with ChatGPT and see just how capable it could be at producing code to solve very complex problems.  I started with prompts to ask ChatGPT how to outright create a three.js solver for the Kanoodle Extreme puzzle game :).  Needless to say, it wasn't quite intelligent enough to accomplish that task.  I then moved on to seeing how quickly it could help me port existing code from my C# console app solver to JavaScript and three.js to build a 3D version of the solver based on logic that I had already hammered out.  I found it quite effective. Given I hadn't worked in three.js in over five years, it definitely helped accelerate getting the foundational pieces in place and I'd estimate it probably cut the total time to build this solution by about 40-50%!
+This has been a fun hobby project that I've contributed to off-and-on over the course of the last three years. What started as an obsessive curiosity to see if a backtracking algorithm could solve a complex 3D puzzle in a reasonable performance window quickly became a great proving grounds for learning and experimentation in advanced performance optimization strategies  and 3D scene rendering using three.js
 
 To use the 3D solver now, [View the live app](https://blue-stone-0bae98c0f.3.azurestaticapps.net/)
 
-Check out the original [Kanoodle Extreme Solver - console edition](https://github.com/benelder/Kanoodle/tree/master)
+For background on this project: [Kanoodle 3d Solver - Background](https://github.com/benelder/kanoodle-3d/wiki)
